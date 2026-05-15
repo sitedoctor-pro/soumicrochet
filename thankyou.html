@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7a1730" />
+  <title>شكراً على طلبك | Soumi Crochet</title>
+  <meta name="description" content="Soumi Crochet order confirmation page." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="icon" href="assets/img/logo.png" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="thankyou-page">
+  <div class="noise"></div>
+  <main class="thankyou-wrap">
+    <section class="thankyou-card glass reveal in-view">
+      <a class="brand thankyou-brand" href="index.html" aria-label="Soumi Crochet"><img src="assets/img/logo.png" alt="Soumi Crochet" /><div><strong>Soumi Crochet</strong><span>Luxury handmade bags</span></div></a>
+      <div class="success-mark">✓</div>
+      <span class="eyebrow">ORDER CONFIRMED</span>
+      <h1>طلبك تسجل بنجاح ✨</h1>
+      <p class="lead">شكراً على الثقة ديالك. توصّلنا بالطلب وغادي يتم التواصل معك لتأكيد التوصيل فـ 24 حتى 48 ساعة.</p>
+
+      <div class="thankyou-product glass-lite">
+        <img id="thankProductImage" src="assets/img/product-01-main.jpg" alt="Selected Soumi Crochet bag" />
+        <div>
+          <strong id="thankProductName">الصاك المختار</strong>
+          <span class="selected-price" id="thankProductPrice">الثمن: حسب الموديل</span>
+          <small id="thankProductUrl">soumicrochet.store/assets/img/product-01-main.jpg</small>
+        </div>
+      </div>
+
+      <a class="btn btn-primary btn-xl btn-glow pulse thankyou-whatsapp" href="https://wa.me/212662711995?text=سلام،%20قمت%20بطلب%20صاك%20من%20الموقع%20وبغيت%20نسرع%20التوصيل." target="_blank" rel="noopener">سرّعي تأكيد التوصيل عبر واتساب</a>
+      <a class="btn btn-secondary" href="index.html#products">الرجوع للموديلات</a>
+    </section>
+  </main>
+  <script>
+    const saved = sessionStorage.getItem('soumi_last_order') || localStorage.getItem('soumi_last_order_backup');
+    if(saved){
+      try{
+        const order = JSON.parse(saved);
+        if(order.product) document.getElementById('thankProductName').textContent = order.product;
+        if(order.price) document.getElementById('thankProductPrice').textContent = order.price;
+        if(order.image) document.getElementById('thankProductUrl').textContent = order.image;
+        if(order.imageAsset) document.getElementById('thankProductImage').src = order.imageAsset;
+      }catch(e){}
+    }
+  </script>
+</body>
+</html>
