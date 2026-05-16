@@ -25,6 +25,11 @@ const translations = {
     faqQ2:'واش نقدر نخلص حتى يوصلني الصاك؟',faqA2:'بطبيعة الحال! الدفع كيكون عند الاستلام (Cash on Delivery) باش تكوني مرتاحة وتأكدي من الجودة ديال صاكك عاد تخلصي.',
     faqQ3:'شحال كياخد التوصيل؟',faqA3:'التوصيل سريع وكياخد بين 24 حتى 48 ساعة كأقصى حد لجميع المدن المغربية.',
     faqQ4:'واش التصاور حقيقيين؟',faqA4:'أكيد، كاع التصاور لي كتشوفي هما ديال الصيكان الحقيقيين ديالنا، وتأكدي بلي غيوصلك نفس الموديل لي شفتي وعجبك.',
+    trustTitle:'✨ وعودنا ليك.. باش تقداي ونتي مرتاحة 100%!',
+    trust1Title:'🥇 جودة مافيهاش نقاش',trust1Desc:'صيكان مخدومين بحب وعناية، كل غرزة وكل عقيقة بلاصتها باش يدومو معاك سنين.',
+    trust2Title:'🤝 أثمنة معقولة بزاف',trust2Desc:'الجودة ديالنا كتسوى كثر، ولكن حيت كنخدمو ديريكت من يدينا ليديك وفرنا ليك أحسن ثمن.',
+    trust3Title:'🚚 خلصي حتى تشدي صاكك',trust3Desc:'شوفي صاكك بعينيك، قيسيه وعجبك وتأكدي من الجودة ديالو، عاد خلصي.',
+    trust4Title:'📞 خدمة ما بعد البيع',trust4Desc:'حنا معاك ديما، أي استفسار، فريقنا فالواتساب محلول ليك فكل وقت باش يجاوبك بسرعة.',
     orderBtn:'طلبها',confirm:'تأكيد الطلب',priceLabel:'الثمن',currency:'درهم',step1Title:'اختاري الصاك',step1Lead:'ضغطي على الموديل لي بغيتي، وتقدري ترجعي تبدليه قبل ما تسالي الطلب.',
     step2Title:'معلوماتك',step2Lead:'خلي الاسم ورقم الهاتف باش نأكدو الطلب بسرعة.',step3Title:'التوصيل',step3Lead:'كملي المدينة والعنوان باش يتوجد الطلب ديالك.',
     nextBtn:'التالي',backBtn:'رجوع',submitBtn:'تأكيد الطلب',nameLabel:'الاسم الكامل',phoneLabel:'رقم الهاتف',cityLabel:'المدينة',addressLabel:'العنوان',stickyCta:'اطلبي الصاك ديالك دابا',waIntro:'سلام، كيفاش نقدر نعاونك؟ اختاري جواب سريع:'
@@ -32,17 +37,22 @@ const translations = {
   fr:{
     strip1:'🚚 Livraison rapide 24-48h',strip2:'💵 Paiement à la livraison',strip3:'👜 Pièces limitées faites main',
     navHome:'Accueil',navProducts:'Modèles',navStory:'Histoire',navReviews:'Avis',navFaq:'FAQ',
-    heroTitle:'✨ Brillez avec une touche unique.. sacs faits main! 👜',
-    heroLead:'Collection exclusive de sacs crochet et perles 💎. Finition soignée, haute qualité, et détails qui captent le regard 😍. Choisissez le style qui vous va et soyez unique à chaque occasion 👑.',
-    badge1:'Fait main',badge2:'Paiement à la livraison',badge3:'Modèles limités',primaryCta:'🛒 Commandez votre sac maintenant',secondaryCta:'👇 Découvrir tous les modèles',
-    productsTitle:'Choisissez le modèle qui vous fait craquer',productsLead:'Glissez à droite ou à gauche pour voir les modèles 👜. Chaque carte montre uniquement l’image principale, puis les détails s’ouvrent dans la fenêtre produit.',
+    heroTitle:'✨ Brillez avec une touche unique.. des sacs faits main! 👜',
+    heroLead:'Collection exclusive de sacs crochet et perles 💎. Finition soignée, haute qualité, et des détails qui attirent tous les regards 😍. Choisissez le style qui vous ressemble et soyez unique à chaque occasion 👑.',
+    badge1:'Fait main',badge2:'Paiement à la livraison',badge3:'Modèles limités',primaryCta:'🛒 Commander mon sac maintenant',secondaryCta:'👇 Découvrir tous les modèles',
+    productsTitle:'Choisissez le modèle qui vous fait craquer',productsLead:'Glissez à gauche et à droite pour découvrir les modèles. Chaque carte montre l’image principale; les détails s’ouvrent dans le modal.',
     storyTitle:'✨ Pas juste un sac.. une œuvre d’art faite avec amour! 💖',
-    storyBody:'Chaque sac de soumicrochet 🧶 porte une histoire de créativité, patience et précision ⏳. Quand vous voyez les perles noires brillantes alignées une par une 🖤, ou cette maille crochet épaisse travaillée à la main avec soin 🧵, vous comprenez que ce n’est pas un travail de machine ni une production de masse 🚫.. c’est un travail de mains 🤲 qui donne du temps et de l’âme pour créer une pièce unique 👑. Chez nous, les détails sont tout! 🔍 De la chaîne dorée qui ajoute une touche de luxe ✨, au fermoir solide 🔒, jusqu’à la structure qui garde le sac bien formé et élégant 👜.',
+    storyBody:'Chaque sac soumicrochet 🧶 porte une histoire de créativité, de patience et de précision extrême ⏳. Quand vous voyez ces perles noires brillantes posées une par une 🖤, ou cette maille crochet épaisse travaillée soigneusement à la main 🧵, vous savez que ce n’est ni une machine ni une production de masse 🚫.. c’est le travail des mains 🤲 qui donnent du temps et de l’âme pour créer une pièce unique 👑. Les détails sont tout pour nous! 🔍 De la chaîne dorée qui apporte une touche de luxe ✨, au fermoir solide 🔒, jusqu’à la structure qui garde le sac bien formé et généreux 👜.',
     storyCta:'Commander mon modèle',reviewsTitle:'Avis des clientes Soumi Crochet',faqTitle:'Questions fréquentes',
     faqQ1:'Les sacs sont-ils 100% faits main?',faqA1:'Oui, chaque sac est travaillé avec soin et haute précision par des artisans, ce qui demande du temps pour garantir une qualité premium et un modèle unique.',
     faqQ2:'Puis-je payer à la livraison?',faqA2:'Bien sûr! Le paiement se fait à la livraison (Cash on Delivery) pour que vous soyez rassurée et que vous validiez la qualité de votre sac avant de payer.',
     faqQ3:'Combien de temps prend la livraison?',faqA3:'La livraison est rapide et prend entre 24 et 48 heures maximum dans toutes les villes du Maroc.',
     faqQ4:'Les photos sont-elles réelles?',faqA4:'Oui, toutes les photos affichées sont celles de nos vrais sacs, et vous recevrez le même modèle que celui que vous avez choisi.',
+    trustTitle:'✨ Nos Engagements.. Pour un achat en toute sérénité!',
+    trust1Title:'🥇 Qualité irréprochable',trust1Desc:'Des sacs faits main avec passion et précision pour durer.',
+    trust2Title:'🤝 Prix juste et transparent',trust2Desc:'En travaillant directement de l\'artisan à vous, nous offrons le meilleur prix.',
+    trust3Title:'🚚 Paiement à la livraison',trust3Desc:'Vérifiez votre sac de vos propres yeux, assurez-vous de la qualité, et payez à la réception.',
+    trust4Title:'📞 Service client dédié',trust4Desc:'Nous sommes toujours là pour vous. Notre équipe est disponible sur WhatsApp pour vous.',
     orderBtn:'Commander',confirm:'Confirmer la commande',priceLabel:'Prix',currency:'DH',step1Title:'Choisissez le sac',step1Lead:'Cliquez sur le modèle souhaité. Vous pouvez le changer avant de finaliser la commande.',
     step2Title:'Vos informations',step2Lead:'Laissez votre nom et téléphone pour confirmer rapidement la commande.',step3Title:'Livraison',step3Lead:'Complétez la ville et l’adresse pour préparer votre commande.',
     nextBtn:'Suivant',backBtn:'Retour',submitBtn:'Confirmer la commande',nameLabel:'Nom complet',phoneLabel:'Téléphone',cityLabel:'Ville',addressLabel:'Adresse',stickyCta:'Commandez votre sac maintenant',waIntro:'Bonjour, comment pouvons-nous vous aider? Choisissez une réponse rapide:'
@@ -54,6 +64,8 @@ function imageUrl(file){return STORE_IMAGE_BASE + file;}
 function productName(p){return currentLang === 'ar' ? p.nameAr : p.nameFr;}
 function productDesc(p){return currentLang === 'ar' ? p.descAr : p.descFr;}
 function priceText(p){const t = translations[currentLang]; return `${t.priceLabel}: ${p.price} ${t.currency}`;}
+function priceHtml(p){const t = translations[currentLang]; return `<span class="price-label">${escapeHTML(t.priceLabel)}:</span> <del class="old-price">${Number(p.oldPrice || p.price)} DH</del> <strong>${Number(p.price)} ${escapeHTML(t.currency)}</strong>`;}
+function priceFullText(p){return `${priceText(p)} (Old: ${Number(p.oldPrice || p.price)} DH)`;}
 function safeSet(id, value){const n=$(id); if(n) n.textContent = value;}
 function escapeHTML(str){return String(str).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
 
@@ -68,7 +80,7 @@ function renderProducts(){
       </button>
       <div class="product-card-body">
         <h3>${escapeHTML(productName(p))}</h3>
-        <span class="price-tag">${escapeHTML(priceText(p))}</span>
+        <span class="price-tag">${priceHtml(p)}</span>
         <p class="type-target product-desc-type">${escapeHTML(productDesc(p))}</p>
         <button class="btn btn-primary btn-small btn-glow pulse" type="button" data-order-product="${p.id}">${translations[currentLang].orderBtn}</button>
       </div>
@@ -86,7 +98,7 @@ function renderPicker(){
     <button type="button" class="${selectedProduct && selectedProduct.id === p.id ? 'active':''}" data-pick-product="${p.id}">
       <img src="${asset(p.images[0])}" alt="${escapeHTML(productName(p))}" loading="lazy" />
       <strong>${escapeHTML(productName(p))}</strong>
-      <span class="picker-price">${escapeHTML(priceText(p))}</span>
+      <span class="picker-price">${priceHtml(p)}</span>
     </button>`).join('');
   grid.querySelectorAll('[data-pick-product]').forEach(btn => btn.addEventListener('click', () => {
     const p = products.find(x => x.id === btn.dataset.pickProduct) || products[0];
@@ -102,14 +114,14 @@ function setSelectedProduct(product, imgIndex = 0){
   const fullUrl = imageUrl(file);
   if($('selectedModelName')) $('selectedModelName').value = productName(selectedProduct);
   if($('selectedProductImage')) $('selectedProductImage').value = fullUrl;
-  if($('selectedProductPrice')) $('selectedProductPrice').value = `${selectedProduct.price} DH`;
+  if($('selectedProductPrice')) $('selectedProductPrice').value = priceFullText(selectedProduct);
   if($('sourcePage')) $('sourcePage').value = window.location.href;
   if($('selectedPreview')) {$('selectedPreview').src = asset(file); $('selectedPreview').alt = productName(selectedProduct);}
   safeSet('selectedLabel', productName(selectedProduct));
-  safeSet('selectedPriceLabel', priceText(selectedProduct));
+  if($('selectedPriceLabel')) $('selectedPriceLabel').innerHTML = priceHtml(selectedProduct);
   safeSet('selectedUrlText', fullUrl);
   safeSet('finalProductName', productName(selectedProduct));
-  safeSet('finalProductPrice', priceText(selectedProduct));
+  if($('finalProductPrice')) $('finalProductPrice').innerHTML = priceHtml(selectedProduct);
   safeSet('finalProductUrl', fullUrl);
 }
 
@@ -143,7 +155,7 @@ function renderProductModal(){
       <div class="modal-info">
         <span class="eyebrow">SOUMI DETAILS</span>
         <h2>${escapeHTML(productName(modalProduct))}</h2>
-        <span class="price-tag">${escapeHTML(priceText(modalProduct))}</span>
+        <span class="price-tag">${priceHtml(modalProduct)}</span>
         <p>${escapeHTML(productDesc(modalProduct))}</p>
         <div class="modal-thumbs">${imgs.map((img,i)=>`<button type="button" class="${i===modalImageIndex?'active':''}" data-modal-thumb="${i}"><img src="${asset(img)}" alt="${escapeHTML(productName(modalProduct))} ${i+1}" /></button>`).join('')}</div>
         <button class="btn btn-primary btn-xl btn-glow pulse" type="button" id="confirmModalOrder">${translations[currentLang].confirm}</button>
@@ -330,16 +342,19 @@ function initOrderForm(){
     if(validateStep(current)) showStep(Number(btn.dataset.next));
   }));
   document.querySelectorAll('.prev-step').forEach(btn => btn.addEventListener('click', () => showStep(Number(btn.dataset.prev))));
-  $('orderForm')?.addEventListener('submit', (e) => {
+  $('orderForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
     setSelectedProduct(selectedProduct, selectedImageIndex);
     const step3Inputs = Array.from(document.querySelectorAll('.form-step[data-step="3"] input[required]'));
-    for(const input of step3Inputs){ if(!input.value.trim()){ e.preventDefault(); input.focus(); return; } }
+    for(const input of step3Inputs){ if(!input.value.trim()){ input.focus(); return; } }
+
+    const selectedImageFile = selectedProduct.images[selectedImageIndex] || selectedProduct.images[0];
     const payload = {
       name: $('customerName')?.value || '',
       product: productName(selectedProduct),
       price: priceText(selectedProduct),
-      image: $('selectedProductImage')?.value || imageUrl(selectedProduct.images[selectedImageIndex] || selectedProduct.images[0]),
-      imageAsset: asset(selectedProduct.images[selectedImageIndex] || selectedProduct.images[0])
+      image: $('selectedProductImage')?.value || imageUrl(selectedImageFile),
+      imageAsset: asset(selectedImageFile)
     };
     const encodedPayload = JSON.stringify(payload);
     sessionStorage.setItem('soumi_last_order', encodedPayload);
@@ -347,8 +362,32 @@ function initOrderForm(){
     try{
       history.replaceState({soumiLastOrder: payload}, document.title, window.location.href);
     }catch(err){}
-  });
-}
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : '';
+    if(submitBtn){
+      submitBtn.textContent = 'جاري الإرسال... / Envoi...';
+      submitBtn.disabled = true;
+    }
+
+    try{
+      const response = await fetch(form.action, {
+        method:'POST',
+        body:formData,
+        headers:{'Accept':'application/json'}
+      });
+      if(response.ok){
+        window.location.href = 'thankyou.html';
+      }else{
+        alert("وقع مشكل فإرسال الطلب، المرجو المحاولة. / Erreur lors de l'envoi.");
+        if(submitBtn){submitBtn.textContent = originalText; submitBtn.disabled = false;}
+      }
+    }catch(err){
+      window.location.href = 'thankyou.html';
+    }
+  });}
 function initCursorGlow(){
   const glow = document.querySelector('.cursor-glow');
   if(!glow || matchMedia('(pointer: coarse)').matches) return;
