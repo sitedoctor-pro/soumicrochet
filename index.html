@@ -173,6 +173,23 @@
 
   <button class="mobile-sticky-cta btn btn-primary pulse js-open-order" type="button" data-i18n="stickyCta">Commander maintenant</button>
 
+
+  <div class="notification-modal" id="notificationModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
+    <div class="notification-mask" data-close="notification"></div>
+    <article class="notification-card glass">
+      <div class="notification-icon">🔔</div>
+      <span class="eyebrow" data-i18n="notifEyebrow">NOTIFICATIONS PRIVÉES</span>
+      <h2 id="notificationTitle" data-i18n="notifTitle">Activez les notifications Soumi Crochet</h2>
+      <p data-i18n="notifText">Recevez les nouveautés, confirmations et offres limitées directement sur votre appareil.</p>
+      <p class="notification-warning" id="notificationWarning" hidden data-i18n="notifWarning">Certaines fonctionnalités peuvent être limitées si les notifications restent désactivées.</p>
+      <div class="notification-actions">
+        <button class="btn btn-primary btn-glow pulse" id="activateNotificationsBtn" type="button" data-i18n="notifActivate">Activer les notifications</button>
+        <button class="btn btn-secondary glass" id="continueBrowsingBtn" type="button" data-i18n="notifContinue">Continuer la navigation</button>
+      </div>
+    </article>
+  </div>
+  <!-- /notification-permission -->
+
   <div class="modal" id="productModal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal-mask" data-close="product"></div>
     <div class="modal-card glass product-modal-card">
