@@ -51,28 +51,91 @@ async function refreshOneSignalUserId(){
   }catch(err){ console.warn('OneSignal subscriber sync skipped', err); }
 }
 
-let cachedIpAddress = null;
-async function getVisitorIp(){
-  if(cachedIpAddress !== null) return cachedIpAddress;
+let cachedGeo = null;
+async function getVisitorGeo(){
+  if(cachedGeo) return cachedGeo;
   try{
-    const response = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
-    if(!response.ok) throw new Error('IP lookup failed');
-    const data = await response.json();
-    cachedIpAddress = data.ip || null;
+    const response = await fetch('https://ipapi.co/json/', { cache:'no-store' });
+    if(response.ok){
+      const data = await response.json();
+      cachedGeo = {
+        ip_address: data.ip || null,
+        city: data.city || null,
+        country: data.country_name || null,
+        region: data.region || null
+      };
+      return cachedGeo;
+    }
+  }catch(err){}
+  try{
+    const response = await fetch('https://api.ipify.org?format=json', { cache:'no-store' });
+    const data = response.ok ? await response.json() : {};
+    cachedGeo = { ip_address:data.ip || null, city:null, country:null, region:null };
   }catch(err){
-    cachedIpAddress = null;
+    cachedGeo = { ip_address:null, city:null, country:null, region:null };
   }
-  return cachedIpAddress;
+  return cachedGeo;
+}
+
+function getTypedCity(){
+  return $('customerCity')?.value?.trim() || '';
+}
+
+function visitorActivity(eventType, extra={}){
+  return {
+    event_type:eventType,
+    page_url:window.location.href,
+    product_id:extra.product_id || extra.form_draft?.product_id || null,
+    product_name:extra.product_name || extra.form_draft?.product_name || null,
+    form_draft:extra.form_draft || null,
+    at:new Date().toISOString()
+  };
+}
+
+async function upsertVisitor(eventType, extra={}){
+  if(!supabaseClient) return;
+  try{
+    const geo = await getVisitorGeo();
+    const sessionId = ensureSessionId();
+    const typedCity = getTypedCity();
+    const city = typedCity || geo.city || null;
+    const activity = visitorActivity(eventType, extra);
+    const existingRaw = localStorage.getItem('soumi_activity_history');
+    const history = existingRaw ? JSON.parse(existingRaw) : [];
+    history.push(activity);
+    const cleanHistory = history.slice(-50);
+    localStorage.setItem('soumi_activity_history', JSON.stringify(cleanHistory));
+    await supabaseClient.from('visitors').upsert({
+      session_id: sessionId,
+      ip_address: geo.ip_address,
+      city,
+      inferred_city: geo.city,
+      typed_city: typedCity || null,
+      page_url: window.location.href,
+      onesignal_user_id: getOneSignalUserId() || null,
+      device_info: {
+        platform:navigator.platform || 'web',
+        user_agent:navigator.userAgent || '',
+        language:navigator.language || '',
+        screen:`${window.screen?.width || 0}x${window.screen?.height || 0}`
+      },
+      activity_history: cleanHistory,
+      last_event_type: eventType,
+      last_seen: new Date().toISOString()
+    }, { onConflict:'session_id' });
+  }catch(err){ console.warn('Visitor upsert skipped', err); }
 }
 
 async function trackEvent(eventType, extra={}){
   if(!supabaseClient) return;
   try{
-    const ipAddress = await getVisitorIp();
+    const geo = await getVisitorGeo();
+    const typedCity = getTypedCity();
+    await upsertVisitor(eventType, extra);
     await supabaseClient.from('analytics').insert({
       session_id: ensureSessionId(),
-      ip_address: ipAddress,
-      city: $('customerCity')?.value || null,
+      ip_address: geo.ip_address,
+      city: typedCity || geo.city || null,
       page_url: window.location.href,
       event_type: eventType,
       form_draft: extra.form_draft || null,
@@ -122,7 +185,7 @@ const translations = {
     nameLabel:'الاسم الكامل',phoneLabel:'رقم الهاتف',cityLabel:'المدينة',addressLabel:'العنوان الكامل',
     submitBtn:'تأكيد الطلب',stickyCta:'اطلبي الصاك ديالك دابا',waIntro:'سلام، كيفاش نقدر نعاونك؟ اختاري جواب سريع:',
     footerText:'صيكان كروشي وعقيق مخدومين باليد فالمغرب. أناقة حرفية، توصيل سريع، والدفع عند الاستلام.',
-    policiesLink:'سياسة التوصيل والضمان',priceLabel:'الثمن'
+    policiesLink:'سياسة التوصيل والضمان',priceLabel:'الثمن',notifEyebrow:'تنبيهات خاصة',notifTitle:'فعّلي تنبيهات Soumi Crochet',notifText:'توصلّي بالجديد، تأكيد الطلب، والعروض المحدودة مباشرة فالهاتف ديالك.',notifWarning:'بعض المميزات ممكن تكون محدودة إلا بقات التنبيهات مطفّية.',notifActivate:'فعّلي التنبيهات',notifContinue:'كملي التصفح'
   },
   fr:{
     navProducts:'Produits',navStory:'Histoire',navReviews:'Avis',navFaq:'FAQ',navGuarantees:'Garanties',
@@ -148,7 +211,7 @@ const translations = {
     nameLabel:'Nom complet',phoneLabel:'Téléphone',cityLabel:'Ville',addressLabel:'Adresse complète',
     submitBtn:'Confirmer la commande',stickyCta:'Commander maintenant',waIntro:'Bonjour, comment pouvons-nous vous aider?',
     footerText:'Sacs crochet et perles faits main au Maroc. Élégance artisanale, livraison rapide, paiement à la réception.',
-    policiesLink:'Politiques & garanties',priceLabel:'Prix'
+    policiesLink:'Politiques & garanties',priceLabel:'Prix',notifEyebrow:'NOTIFICATIONS PRIVÉES',notifTitle:'Activez les notifications Soumi Crochet',notifText:'Recevez les nouveautés, confirmations et offres limitées directement sur votre appareil.',notifWarning:'Certaines fonctionnalités peuvent être limitées si les notifications restent désactivées.',notifActivate:'Activer les notifications',notifContinue:'Continuer la navigation'
   }
 };
 
@@ -420,6 +483,7 @@ function initOrderForm(){
       oldPrice: oldPriceText(selectedProduct),
       image: $('selectedProductImage')?.value || imageUrl(selectedImageFile),
       imageAsset: asset(selectedImageFile),
+      product_image_url: asset(selectedImageFile),
       session_id: ensureSessionId(),
       onesignal_user_id: getOneSignalUserId()
     };
@@ -445,6 +509,7 @@ function initOrderForm(){
         product_id: payload.product_id,
         product_name: payload.product,
         price: payload.numeric_price,
+        product_image_url: payload.product_image_url || payload.imageAsset || payload.image,
         status: 'pending',
         onesignal_user_id: payload.onesignal_user_id,
         session_id: payload.session_id
@@ -518,6 +583,57 @@ function initReviewModal(){
       if(message) message.textContent = currentLang === 'ar' ? 'وقع مشكل فإرسال الرأي. عاودي المحاولة.' : 'Erreur lors de l’envoi. Réessayez.';
       if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = originalText; }
     }
+  });
+}
+
+function initNotificationPrompt(){
+  const modal = $('notificationModal');
+  const activate = $('activateNotificationsBtn');
+  const cont = $('continueBrowsingBtn');
+  const warning = $('notificationWarning');
+  if(!modal || localStorage.getItem('soumi_notification_prompt_seen') === 'yes') return;
+  const show = () => {
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+  };
+  const close = () => {
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+    localStorage.setItem('soumi_notification_prompt_seen','yes');
+  };
+  setTimeout(show, 900);
+  cont?.addEventListener('click', close);
+  document.querySelectorAll('[data-close="notification"]').forEach(x => x.addEventListener('click', close));
+  activate?.addEventListener('click', async () => {
+    try{
+      if(window.OneSignalDeferred){
+        window.OneSignalDeferred.push(async function(OneSignal){
+          await OneSignal.Notifications.requestPermission();
+          await refreshOneSignalUserId();
+        });
+      }else if(window.OneSignal?.Notifications?.requestPermission){
+        await window.OneSignal.Notifications.requestPermission();
+        await refreshOneSignalUserId();
+      }
+      close();
+    }catch(err){
+      if(warning) warning.hidden = false;
+    }
+  });
+  if('Notification' in window && Notification.permission === 'denied' && warning) warning.hidden = false;
+}
+
+function initActivityTracking(){
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('a,button,[data-product-id],[data-order-product]');
+    if(!target) return;
+    const label = target.getAttribute('data-i18n') || target.textContent?.trim()?.slice(0,80) || target.tagName;
+    const productId = target.getAttribute('data-product-id') || target.getAttribute('data-order-product') || null;
+    upsertVisitor('click', { form_draft:{ label, product_id:productId } });
+  }, { passive:true });
+  window.addEventListener('beforeunload', () => {
+    const payload = JSON.stringify({ session_id:ensureSessionId(), event_type:'leave', page_url:window.location.href });
+    navigator.sendBeacon?.('/__soumi_activity__', payload);
   });
 }
 
@@ -655,6 +771,8 @@ async function init(){
   initCursorGlow();
   ensureSessionId();
   trackEvent('visit');
+  initNotificationPrompt();
+  initActivityTracking();
   setTimeout(refreshOneSignalUserId, 2500);
   $('langSwitch')?.addEventListener('click', () => {
     currentLang = currentLang === 'ar' ? 'fr' : 'ar';
