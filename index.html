@@ -11,258 +11,299 @@
   <meta property="og:title" content="Soumi Crochet | Handmade Luxury Bags" />
   <meta property="og:description" content="تشكيلة حصرية من حقائب الكروشي والعقيق المخدومة باليد في المغرب. اطلبي الآن والدفع عند الاستلام." />
   <meta property="og:image" content="assets/img/hero-main.jpg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ar_MA" />
+  <link rel="canonical" href="https://soumicrochet.store/" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="icon" href="assets/img/logo.png" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-  <div class="noise"></div>
   <div class="cursor-glow" aria-hidden="true"></div>
 
-  <div class="top-strip">
-    <div class="container top-strip-inner">
-      <span data-i18n="strip1">🚚 التوصيل سريع 24-48 ساعة</span>
-      <span data-i18n="strip2">💵 الدفع عند الاستلام</span>
-      <span data-i18n="strip3">👜 قطع محدودة مخدومة باليد</span>
-    </div>
-  </div>
-
   <header class="site-header glass">
-    <a href="#home" class="brand" aria-label="Soumi Crochet">
-      <img src="assets/img/logo.png" alt="Soumi Crochet" fetchpriority="high" />
-      <div><strong>Soumi Crochet</strong><span>Handmade Luxury Bags</span></div>
-    </a>
+    <div class="container nav-shell">
+      <a href="#home" class="brand" aria-label="Soumi Crochet">
+        <img src="assets/img/logo.png" alt="Soumi Crochet logo" />
+      </a>
 
-    <button class="menu-toggle" id="menuToggle" type="button" aria-label="القائمة" aria-expanded="false" aria-controls="mainNav">
-      <span></span><span></span><span></span>
-    </button>
+      <button class="menu-toggle" id="menuToggle" type="button" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
 
-    <nav class="nav glass" id="mainNav" aria-label="Main navigation">
-      <a href="#home" data-i18n="navHome">الرئيسية</a>
-      <a href="#products" data-i18n="navProducts">الموديلات</a>
-      <a href="#story" data-i18n="navStory">القصة</a>
-      <a href="#reviews" data-i18n="navReviews">آراء</a>
-      <a href="#faq" data-i18n="navFaq">الأسئلة</a>
-    </nav>
+      <nav class="nav" id="mainNav" aria-label="Main navigation">
+        <a href="#products" data-i18n="navProducts">Produits</a>
+        <a href="#story" data-i18n="navStory">Histoire</a>
+        <a href="#reviews" data-i18n="navReviews">Avis</a>
+        <a href="#faq" data-i18n="navFaq">FAQ</a>
+        <a href="#guarantees" data-i18n="navGuarantees">Garanties</a>
+      </nav>
 
-    <button class="lang-switch" id="langSwitch" type="button" aria-label="Switch language"><span>AR</span><span class="active">FR</span></button>
+      <button class="lang-switch glass" id="langSwitch" type="button" aria-label="Language switch">
+        <span>AR</span><span class="active">FR</span>
+      </button>
+    </div>
   </header>
 
   <main>
-    <section id="home" class="hero section">
-      <div class="hero-media">
-        <img class="hero-fallback" src="assets/img/hero-main.jpg" alt="" fetchpriority="high" />
-        <div class="hero-overlay hero-overlay-light"></div>
-        <div class="hero-gridlines"></div>
-      </div>
-
+    <section class="hero section" id="home">
       <div class="container hero-grid">
         <div class="hero-copy reveal">
-          <span class="eyebrow">SOUMI CROCHET</span>
-          <h1 class="type-target" data-i18n="heroTitle">✨ تألقي بلمسة فريدة.. صيكان هماوية مخدومة باليد! 👜</h1>
-          <p class="lead type-target" data-i18n="heroLead">تشكيلة حصرية من حقائب الكروشي والعقيق 💎. خدمة متقونة، جودة عالية، وتفاصيل كتخطف الأنظار 😍. اختاري الستايل لي يواتيك وكوني متميزة فكل مناسبة 👑.</p>
+          <span class="eyebrow">SOUMI CROCHET · HANDMADE LUXURY</span>
+          <h1 class="type-target hero-title" data-i18n="heroTitle">✨ Brillez avec une touche unique.. des sacs handmade qui captivent! 👜</h1>
+          <p class="lead type-target" data-i18n="heroLead">Collection exclusive de sacs crochet et perles 💎. Finition soignée, haute qualité, et des détails qui attirent tous les regards 😍. Choisissez le style qui vous ressemble et soyez unique à chaque occasion 👑.</p>
 
-          <div class="hero-badges reveal reveal-delay">
-            <span data-i18n="badge1">مخدومة باليد</span>
-            <span data-i18n="badge2">الدفع عند الاستلام</span>
-            <span data-i18n="badge3">موديلات محدودة</span>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-glow pulse js-open-order" type="button" data-i18n="primaryCta">🛒 Commander mon sac maintenant</button>
+            <a class="btn btn-secondary glass" href="#products" data-i18n="secondaryCta">👇 Découvrir tous les modèles</a>
           </div>
 
-          <div class="hero-actions reveal reveal-delay">
-            <button class="btn btn-primary btn-xl btn-glow js-open-order pulse" type="button" data-i18n="primaryCta">🛒 اطلبي الصاك ديالك دابا</button>
-            <a class="btn btn-secondary" href="#products" data-i18n="secondaryCta">👇 اكتشفي جميع الموديلات</a>
+          <div class="hero-badges">
+            <span class="glass" data-i18n="badge1">Fait main</span>
+            <span class="glass" data-i18n="badge2">Paiement à la livraison</span>
+            <span class="glass" data-i18n="badge3">Modèles limités</span>
           </div>
         </div>
 
-        <div class="hero-visual reveal reveal-delay">
-          <div class="showcase-card glass">
-            <div class="live-pill">HANDMADE DROP</div>
-            <div class="hero-stack">
-              <img src="assets/img/hero-main.jpg" alt="Black handmade bag" class="hero-stack-main" loading="eager" fetchpriority="high" />
-              <img src="assets/img/hero-green.jpg" alt="Green handmade bag" class="hero-stack-float float-one" loading="eager" fetchpriority="high" />
-              <img src="assets/img/hero-beige.jpg" alt="Beige handmade bag" class="hero-stack-float float-two" loading="eager" fetchpriority="high" />
-            </div>
-          </div>
+        <div class="hero-art reveal" aria-label="Luxury handmade bags">
+          <div class="orb orb-one"></div>
+          <div class="orb orb-two"></div>
+          <img class="hero-img hero-main-img" src="assets/img/hero-main.jpg" alt="Sac noir handmade Soumi Crochet" />
+          <img class="hero-img hero-float hero-float-one" src="assets/img/hero-green.jpg" alt="Sac vert crochet Soumi Crochet" />
+          <img class="hero-img hero-float hero-float-two" src="assets/img/hero-beige.jpg" alt="Sac beige crochet Soumi Crochet" />
         </div>
       </div>
     </section>
 
-    <section id="products" class="section showcase-section compact-mobile">
+    <section class="section compact-mobile" id="products">
       <div class="container">
-        <div class="section-heading reveal">
+        <div class="section-head reveal">
           <span class="eyebrow">COLLECTION</span>
-          <h2 class="type-target" data-i18n="productsTitle">اختاري الموديل لي خطف قلبك</h2>
-          <p class="type-target" data-i18n="productsLead">سحبي يمين ويسار وشوفي الموديلات. كل بطاقة كتبيّن غير الصورة الرئيسية، والتفاصيل كتفتحيهم فالمودال.</p>
+          <h2 class="type-target" data-i18n="productsTitle">Choisissez le modèle qui vous fait craquer</h2>
+          <p class="type-target section-lead" data-i18n="productsLead">Glissez à gauche et à droite pour découvrir les modèles. Chaque carte montre l’image principale; les détails s’ouvrent dans le modal.</p>
         </div>
 
-        <div class="carousel-shell reveal">
-          <button class="gallery-arrow gallery-prev" id="galleryPrev" type="button" aria-label="Previous product">‹</button>
-          <div class="product-carousel" id="productCarousel" aria-label="Soumi Crochet products carousel"></div>
-          <button class="gallery-arrow gallery-next" id="galleryNext" type="button" aria-label="Next product">›</button>
+        <div class="carousel-shell">
+          <button class="gallery-arrow gallery-prev glass" id="galleryPrev" type="button" aria-label="Previous products">‹</button>
+          <div class="product-carousel" id="productCarousel" aria-live="polite"></div>
+          <button class="gallery-arrow gallery-next glass" id="galleryNext" type="button" aria-label="Next products">›</button>
         </div>
       </div>
     </section>
 
-    <section id="story" class="section story-section compact-mobile">
-      <div class="container">
-        <div class="story-card glass reveal">
-          <div class="story-visual"><img src="assets/img/product-04-main.jpg" alt="Soumi Crochet handmade details" loading="lazy" /></div>
-          <div class="story-copy">
-            <span class="eyebrow">HANDMADE ART</span>
-            <h2 class="type-target" data-i18n="storyTitle">✨ ماشي غير صاك.. هادي تحفة فنية مخدومة بحب! 💖</h2>
-            <p class="type-target" data-i18n="storyBody">كل صاك من soumicrochet 🧶 كيهز معاه قصة ديال إبداع، صبر، ودقة متناهية ⏳. ملي كتشوفي داك العقيق الكحل البراق مستف حبة حبة 🖤، ولا ديك الغرزة ديال الكروشي السميكة لي مخدومة باليد بعناية 🧵، غتعرفي بلي هادشي ماشي خدمة د الماكينة ولا إنتاج بالجملة 🚫.. هادي خدمة د اليدين 🤲 لي عطات وقتها وروحها باش تخرج ليك بياسة وحدة وفريدة 👑. التفاصيل عندنا هي كلشي! 🔍 من السنسلة الذهبية لي كتعطي لمسة ديال الفخامة ✨، للقفل المتين 🔒، وصولاً للهيكل لي كيخلي الصاك شاد راسو وعامر تبارك الله 👜.</p>
-            <button class="btn btn-primary btn-glow js-open-order pulse" type="button" data-i18n="storyCta">نطلب موديل ديالي</button>
-          </div>
+    <section class="section story-section" id="story">
+      <div class="container story-card glass reveal">
+        <div class="story-media">
+          <img src="assets/img/p04/main.jpg" alt="Luxury pearl bag detail" loading="lazy" />
+        </div>
+        <div class="story-copy">
+          <span class="eyebrow">HANDMADE ART</span>
+          <h2 class="type-target" data-i18n="storyTitle">✨ Pas juste un sac.. une œuvre d’art faite avec amour! 💖</h2>
+          <p class="type-target" data-i18n="storyBody">Chaque sac soumicrochet 🧶 porte une histoire de créativité, de patience et de précision extrême ⏳. Quand vous voyez ces perles noires brillantes posées une par une 🖤, ou cette maille crochet épaisse travaillée soigneusement à la main 🧵, vous savez que ce n’est ni une machine ni une production de masse 🚫.. c’est le travail des mains 🤲 qui donnent du temps et de l’âme pour créer une pièce unique 👑. Les détails sont tout pour nous! 🔍 De la chaîne dorée qui apporte une touche de luxe ✨, au fermoir solide 🔒, jusqu’à la structure qui garde le sac bien formé et généreux 👜.</p>
+          <button class="btn btn-primary btn-glow pulse js-open-order" type="button" data-i18n="storyCta">Commander mon modèle</button>
         </div>
       </div>
     </section>
 
-    <section id="reviews" class="section compact-mobile">
+    <section class="section compact-mobile" id="reviews">
       <div class="container">
-        <div class="section-heading reveal">
-          <span class="eyebrow">AUDIO REVIEWS</span>
-          <h2 class="type-target" data-i18n="reviewsTitle">آراء زبونات Soumi Crochet</h2>
+        <div class="section-head reveal">
+          <span class="eyebrow">AUDIO SOCIAL PROOF</span>
+          <h2 class="type-target" data-i18n="reviewsTitle">Avis des clientes Soumi Crochet</h2>
         </div>
+
         <div class="reviews-grid">
           <article class="review-card glass reveal"><div class="stars">★★★★★</div><h3>Fatima - Casablanca</h3><audio controls preload="metadata" src="assets/audio/review-1.ogg"></audio></article>
           <article class="review-card glass reveal"><div class="stars">★★★★★</div><h3>Imane - Rabat</h3><audio controls preload="metadata" src="assets/audio/review-2.ogg"></audio></article>
           <article class="review-card glass reveal"><div class="stars">★★★★★</div><h3>Salma - Marrakech</h3><audio controls preload="metadata" src="assets/audio/review-3.ogg"></audio></article>
           <article class="review-card glass reveal"><div class="stars">★★★★★</div><h3>Nadia - Tanger</h3><audio controls preload="metadata" src="assets/audio/review-4.ogg"></audio></article>
         </div>
+
+        <div class="review-cta-wrap reveal">
+          <button class="btn btn-primary btn-glow pulse" id="openReviewModalBtn" type="button">Laissez un avis</button>
+        </div>
       </div>
     </section>
 
-    <section id="faq" class="section compact-mobile">
+    <section class="section compact-mobile faq-section" id="faq">
       <div class="container">
-        <div class="section-heading reveal"><span class="eyebrow">FAQ</span><h2 class="type-target" data-i18n="faqTitle">أسئلة كطرحوها بزاف</h2></div>
-        <div class="faq-list glass reveal">
-          <details open><summary data-i18n="faqQ1">واش الصيكان مخدومين باليد 100%؟</summary><p data-i18n="faqA1">نعم، كل صاك مخدوم بعناية ودقة عالية من طرف حرفيين، وهادشي كياخد وقت باش نضمنو ليك جودة هماوية وموديل ماكاينش بحالو.</p></details>
-          <details><summary data-i18n="faqQ2">واش نقدر نخلص حتى يوصلني الصاك؟</summary><p data-i18n="faqA2">بطبيعة الحال! الدفع كيكون عند الاستلام (Cash on Delivery) باش تكوني مرتاحة وتأكدي من الجودة ديال صاكك عاد تخلصي.</p></details>
-          <details><summary data-i18n="faqQ3">شحال كياخد التوصيل؟</summary><p data-i18n="faqA3">التوصيل سريع وكياخد بين 24 حتى 48 ساعة كأقصى حد لجميع المدن المغربية.</p></details>
-          <details><summary data-i18n="faqQ4">واش التصاور حقيقيين؟</summary><p data-i18n="faqA4">أكيد، كاع التصاور لي كتشوفي هما ديال الصيكان الحقيقيين ديالنا، وتأكدي بلي غيوصلك نفس الموديل لي شفتي وعجبك.</p></details>
+        <div class="section-head reveal">
+          <span class="eyebrow">FAQ</span>
+          <h2 class="type-target" data-i18n="faqTitle">Questions fréquentes</h2>
+        </div>
+        <div class="faq-list reveal">
+          <details class="glass"><summary data-i18n="faqQ1">Les sacs sont-ils 100% faits main?</summary><p data-i18n="faqA1">Oui, chaque sac est travaillé avec soin et haute précision par des artisans, ce qui demande du temps pour garantir une qualité premium et un modèle unique.</p></details>
+          <details class="glass"><summary data-i18n="faqQ2">Puis-je payer à la livraison?</summary><p data-i18n="faqA2">Bien sûr! Le paiement se fait à la réception pour que vous soyez rassurée et que vous vérifiiez la qualité de votre sac avant de payer.</p></details>
+          <details class="glass"><summary data-i18n="faqQ3">Combien de temps prend la livraison?</summary><p data-i18n="faqA3">La livraison est rapide et prend entre 24 et 48 heures maximum dans toutes les villes du Maroc.</p></details>
+          <details class="glass"><summary data-i18n="faqQ4">Les photos sont-elles réelles?</summary><p data-i18n="faqA4">Oui, toutes les photos montrent nos vrais sacs. Vous recevrez le même modèle que vous avez vu et choisi.</p></details>
         </div>
       </div>
     </section>
 
     <section id="guarantees" class="section compact-mobile">
       <div class="container">
-        <div class="section-heading reveal">
+        <div class="section-head reveal">
           <span class="eyebrow">OUR PROMISE</span>
-          <h2 class="type-target" data-i18n="trustTitle">✨ وعودنا ليك.. باش تقداي ونتي مرتاحة 100%!</h2>
+          <h2 class="type-target" data-i18n="trustTitle">✨ Nos Engagements.. Pour un achat en toute sérénité!</h2>
         </div>
-        <div class="guarantees-grid">
-          <article class="guarantee-card glass reveal">
-            <span class="guarantee-icon">🥇</span>
-            <h3 data-i18n="trust1Title">🥇 جودة مافيهاش نقاش</h3>
-            <p data-i18n="trust1Desc">صيكان مخدومين بحب وعناية، كل غرزة وكل عقيقة بلاصتها باش يدومو معاك سنين.</p>
-          </article>
-          <article class="guarantee-card glass reveal">
-            <span class="guarantee-icon">🤝</span>
-            <h3 data-i18n="trust2Title">🤝 أثمنة معقولة بزاف</h3>
-            <p data-i18n="trust2Desc">الجودة ديالنا كتسوى كثر، ولكن حيت كنخدمو ديريكت من يدينا ليديك وفرنا ليك أحسن ثمن.</p>
-          </article>
-          <article class="guarantee-card glass reveal">
-            <span class="guarantee-icon">🚚</span>
-            <h3 data-i18n="trust3Title">🚚 خلصي حتى تشدي صاكك</h3>
-            <p data-i18n="trust3Desc">شوفي صاكك بعينيك، قيسيه وعجبك وتأكدي من الجودة ديالو، عاد خلصي.</p>
-          </article>
-          <article class="guarantee-card glass reveal">
-            <span class="guarantee-icon">📞</span>
-            <h3 data-i18n="trust4Title">📞 خدمة ما بعد البيع</h3>
-            <p data-i18n="trust4Desc">حنا معاك ديما، أي استفسار، فريقنا فالواتساب محلول ليك فكل وقت باش يجاوبك بسرعة.</p>
-          </article>
+        <div class="promise-grid">
+          <article class="promise-card glass reveal"><h3 data-i18n="trust1Title">🥇 Qualité irréprochable</h3><p data-i18n="trust1Desc">Des sacs faits main avec passion et précision pour durer.</p></article>
+          <article class="promise-card glass reveal"><h3 data-i18n="trust2Title">🤝 Prix juste et transparent</h3><p data-i18n="trust2Desc">En travaillant directement de l'artisan à vous, nous offrons le meilleur prix.</p></article>
+          <article class="promise-card glass reveal"><h3 data-i18n="trust3Title">🚚 Paiement à la livraison</h3><p data-i18n="trust3Desc">Vérifiez votre sac de vos propres yeux, assurez-vous de la qualité, et payez à la réception.</p></article>
+          <article class="promise-card glass reveal"><h3 data-i18n="trust4Title">📞 Service client dédié</h3><p data-i18n="trust4Desc">Nous sommes toujours là pour vous. Notre équipe est disponible sur WhatsApp pour vous.</p></article>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <a href="#home" class="brand footer-brand"><img src="assets/img/logo.png" alt="Soumi Crochet" /><div><strong>Soumi Crochet</strong><span>Luxury handmade bags</span></div></a>
-      <div class="footer-links">
-        <a class="footer-badge instagram-badge" href="https://www.instagram.com/soumi_crochet9/" target="_blank" rel="noopener"><span>✦</span><strong>Instagram: @soumi_crochet9</strong></a>
-        <a class="footer-badge whatsapp-badge" href="https://wa.me/212662711995" target="_blank" rel="noopener"><span>✆</span><strong>WhatsApp: +212 662-711995</strong></a>
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div>
+        <img src="assets/img/logo.png" alt="Soumi Crochet logo" class="footer-logo" />
+        <p data-i18n="footerText">Sacs crochet et perles faits main au Maroc. Élégance artisanale, livraison rapide, paiement à la réception.</p>
+      </div>
+      <div class="footer-badges">
+        <a class="footer-badge" href="https://www.instagram.com/soumi_crochet9/" target="_blank" rel="noopener">Instagram: @soumi_crochet9</a>
+        <a class="footer-badge" href="https://wa.me/212662711995" target="_blank" rel="noopener">WhatsApp: +212 662-711995</a>
+        <a class="footer-badge" href="policies.html" data-i18n="policiesLink">Politiques & garanties</a>
       </div>
     </div>
   </footer>
 
-  <div class="modal-shell" id="productModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close="product"></div>
-    <div class="product-modal glass">
-      <button class="sheet-close" id="closeProductModal" type="button" aria-label="Close">×</button>
+  <button class="mobile-sticky-cta btn btn-primary pulse js-open-order" type="button" data-i18n="stickyCta">Commander maintenant</button>
+
+  <div class="modal" id="productModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-mask" data-close="product"></div>
+    <div class="modal-card glass product-modal-card">
+      <button class="modal-close" id="closeProductModal" type="button" aria-label="Close">×</button>
       <div id="productModalContent"></div>
     </div>
   </div>
 
-  <div class="modal-shell" id="orderModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close="order"></div>
-    <form class="bottom-sheet glass" id="orderForm" action="https://formspree.io/f/meenyzkz" method="POST">
-      <button class="sheet-close" id="closeOrderSheet" type="button" aria-label="Close">×</button>
+  <div class="modal bottom-sheet" id="orderModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-mask" data-close="order"></div>
+    <div class="sheet-panel glass">
+      <button class="modal-close sheet-close" id="closeOrderSheet" type="button" aria-label="Close">×</button>
       <div class="sheet-handle"></div>
-      <div class="order-progress" aria-label="Order steps"><span class="active"></span><span></span><span></span></div>
-      <input type="hidden" name="selected_model_name" id="selectedModelName" />
-      <input type="hidden" name="selected_product_image" id="selectedProductImage" />
-      <input type="hidden" name="selected_product_price" id="selectedProductPrice" />
-      <input type="hidden" name="source_page" id="sourcePage" />
-      <input type="hidden" name="_subject" value="New Soumi Crochet order" />
-      <input type="hidden" name="_next" value="thankyou.html" />
-
-      <div class="form-step active" data-step="1">
-        <div class="section-heading sheet-heading"><span class="eyebrow">STEP 01</span><h2 class="type-target" data-i18n="step1Title">اختاري الصاك</h2><p class="type-target" data-i18n="step1Lead">ضغطي على الموديل لي بغيتي، وتقدري ترجعي تبدليه قبل ما تسالي الطلب.</p></div>
-        <div class="selected-product-summary glass-lite">
-          <img id="selectedPreview" src="assets/img/product-01-main.jpg" alt="Selected product" />
-          <div><strong id="selectedLabel">موديل Soumi 01</strong><span class="selected-price" id="selectedPriceLabel">الثمن: 200 درهم</span><small id="selectedUrlText">soumicrochet.store/assets/img/product-01-main.jpg</small></div>
-        </div>
-        <div class="visual-picker-grid" id="visualPickerGrid"></div>
-        <div class="wizard-actions"><button class="btn btn-primary btn-glow next-step pulse" type="button" data-next="2" data-i18n="nextBtn">التالي</button></div>
+      <div class="sheet-head">
+        <span class="eyebrow">CHECKOUT</span>
+        <h2 class="type-target" data-i18n="orderTitle">Finaliser votre commande</h2>
       </div>
 
-      <div class="form-step" data-step="2">
-        <div class="section-heading sheet-heading"><span class="eyebrow">STEP 02</span><h2 class="type-target" data-i18n="step2Title">معلوماتك</h2><p class="type-target" data-i18n="step2Lead">خلي الاسم ورقم الهاتف باش نأكدو الطلب بسرعة.</p></div>
-        <div class="form-grid two-cols">
-          <label><span data-i18n="nameLabel">الاسم الكامل</span><input id="customerName" name="name" type="text" autocomplete="name" required placeholder="الاسم الكامل" /></label>
-          <label><span data-i18n="phoneLabel">رقم الهاتف</span><input id="customerPhone" name="phone" type="tel" autocomplete="tel" required placeholder="06 00 00 00 00" /></label>
-        </div>
-        <div class="wizard-actions"><button class="btn btn-secondary prev-step" type="button" data-prev="1" data-i18n="backBtn">رجوع</button><button class="btn btn-primary btn-glow next-step pulse" type="button" data-next="3" data-i18n="nextBtn">التالي</button></div>
-      </div>
+      <form id="orderForm" autocomplete="on">
+        <input type="hidden" name="_subject" value="New Soumi Crochet Order" />
+        <input type="hidden" name="_next" value="thankyou.html" />
+        <input type="hidden" name="selected_model_name" id="selectedModelName" />
+        <input type="hidden" name="selected_product_image" id="selectedProductImage" />
+        <input type="hidden" name="selected_product_price" id="selectedProductPrice" />
+        <input type="hidden" name="product_id" id="selectedProductId" />
+        <input type="hidden" name="onesignal_user_id" id="oneSignalUserId" />
+        <input type="hidden" name="session_id" id="sessionId" />
+        <input type="hidden" name="source_page" id="sourcePage" />
 
-      <div class="form-step" data-step="3">
-        <div class="section-heading sheet-heading"><span class="eyebrow">STEP 03</span><h2 class="type-target" data-i18n="step3Title">التوصيل</h2><p class="type-target" data-i18n="step3Lead">كملي المدينة والعنوان باش يتوجد الطلب ديالك.</p></div>
-        <div class="form-grid two-cols">
-          <label><span data-i18n="cityLabel">المدينة</span><input id="customerCity" name="city" type="text" autocomplete="address-level2" required placeholder="المدينة" /></label>
-          <label><span data-i18n="addressLabel">العنوان</span><input id="customerAddress" name="address" type="text" autocomplete="street-address" required placeholder="العنوان الكامل" /></label>
+        <div class="order-progress" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
+
+        <div class="form-step active" data-step="1">
+          <div class="selected-product glass">
+            <img id="selectedPreview" src="assets/img/p01/main.jpg" alt="Selected product" />
+            <div>
+              <strong id="selectedLabel">Soumi Crochet</strong>
+              <span id="selectedPriceLabel" class="price-tag"></span>
+              <small id="selectedUrlText"></small>
+            </div>
+          </div>
+          <div class="visual-picker" id="visualPickerGrid"></div>
+          <div class="wizard-actions">
+            <button class="btn btn-primary btn-glow next-step" type="button" data-next="2" data-i18n="nextBtn">Suivant</button>
+          </div>
         </div>
-        <div class="final-summary glass-lite"><strong id="finalProductName">موديل Soumi 01</strong><span class="selected-price" id="finalProductPrice">الثمن: 200 درهم</span><small id="finalProductUrl">soumicrochet.store/assets/img/product-01-main.jpg</small></div>
-        <div class="wizard-actions"><button class="btn btn-secondary prev-step" type="button" data-prev="2" data-i18n="backBtn">رجوع</button><button class="btn btn-primary btn-glow pulse" type="submit" data-i18n="submitBtn">تأكيد الطلب</button></div>
-      </div>
-    </form>
+
+        <div class="form-step" data-step="2">
+          <label class="field"><span data-i18n="nameLabel">Nom complet</span><input id="customerName" name="name" type="text" required autocomplete="name" /></label>
+          <label class="field"><span data-i18n="phoneLabel">Téléphone</span><input id="customerPhone" name="phone" type="tel" required autocomplete="tel" placeholder="06 00 00 00 00" /></label>
+          <div class="wizard-actions split">
+            <button class="btn btn-secondary prev-step" type="button" data-prev="1" data-i18n="backBtn">Retour</button>
+            <button class="btn btn-primary next-step" type="button" data-next="3" data-i18n="nextBtn">Suivant</button>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="3">
+          <div class="final-summary glass">
+            <strong id="finalProductName">Soumi Crochet</strong>
+            <span id="finalProductPrice" class="price-tag"></span>
+            <small id="finalProductUrl"></small>
+          </div>
+          <label class="field"><span data-i18n="cityLabel">Ville</span><input id="customerCity" name="city" type="text" required autocomplete="address-level2" /></label>
+          <label class="field"><span data-i18n="addressLabel">Adresse complète</span><input id="customerAddress" name="address" type="text" required autocomplete="street-address" /></label>
+          <div class="wizard-actions split">
+            <button class="btn btn-secondary prev-step" type="button" data-prev="2" data-i18n="backBtn">Retour</button>
+            <button class="btn btn-primary btn-glow pulse" type="submit" data-i18n="submitBtn">Confirmer la commande</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <div class="whatsapp-widget">
+
+  <div class="modal" id="reviewModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+    <div class="modal-mask" data-close="review"></div>
+    <div class="modal-card glass review-modal-card">
+      <button class="modal-close" id="closeReviewModal" type="button" aria-label="Close">×</button>
+      <div class="section-head compact">
+        <span class="eyebrow">CUSTOMER REVIEW</span>
+        <h2 id="reviewModalTitle">Laissez un avis</h2>
+        <p>Partagez votre expérience avec Soumi Crochet.</p>
+      </div>
+      <form id="reviewForm" class="review-form" autocomplete="on">
+        <label class="field"><span>Nom</span><input id="reviewerName" name="reviewer_name" type="text" required autocomplete="name" /></label>
+        <label class="field"><span>Ville</span><input id="reviewerCity" name="city" type="text" required autocomplete="address-level2" /></label>
+        <label class="field"><span>Téléphone</span><input id="reviewerPhone" name="phone" type="tel" required autocomplete="tel" placeholder="06 00 00 00 00" /></label>
+        <fieldset class="rating-field" aria-label="Rating">
+          <legend>Note</legend>
+          <div class="rating-stars" id="ratingStars">
+            <input type="radio" id="rating5" name="rating" value="5" required checked><label for="rating5">★</label>
+            <input type="radio" id="rating4" name="rating" value="4"><label for="rating4">★</label>
+            <input type="radio" id="rating3" name="rating" value="3"><label for="rating3">★</label>
+            <input type="radio" id="rating2" name="rating" value="2"><label for="rating2">★</label>
+            <input type="radio" id="rating1" name="rating" value="1"><label for="rating1">★</label>
+          </div>
+        </fieldset>
+        <label class="field"><span>Message</span><textarea id="reviewText" name="review_text" rows="4" required></textarea></label>
+        <p class="form-note" id="reviewFormMessage"></p>
+        <button class="btn btn-primary btn-glow full" type="submit">Envoyer l’avis</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="whatsapp-widget" id="whatsappWidget">
     <div class="wa-chat glass" id="waChat" aria-hidden="true">
       <div class="wa-head"><strong>Soumi Crochet</strong><button type="button" id="waClose" aria-label="Close">×</button></div>
-      <div class="wa-body"><p data-i18n="waIntro">سلام، كيفاش نقدر نعاونك؟ اختاري جواب سريع:</p><button type="button" data-wa="سلام، بغيت نطلب صاك من Soumi Crochet">نطلب صاك</button><button type="button" data-wa="سلام، بغيت نشوف الموديلات المتوفرة">نشوف الموديلات</button><button type="button" data-wa="سلام، بغيت نعرف الثمن والتوصيل">الثمن والتوصيل</button></div>
+      <div class="wa-body">
+        <p data-i18n="waIntro">Bonjour, comment pouvons-nous vous aider?</p>
+        <button type="button" data-wa="سلام، بغيت نطلب صاك من Soumi Crochet">Commander un sac</button>
+        <button type="button" data-wa="سلام، بغيت نشوف الموديلات المتوفرة">Voir les modèles</button>
+        <button type="button" data-wa="سلام، بغيت نعرف الثمن والتوصيل">Prix & livraison</button>
+      </div>
     </div>
-    <button class="whatsapp-float pulse" id="waToggle" type="button" aria-label="WhatsApp"><svg viewBox="0 0 24 24" width="32" height="32" fill="white" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.81 11.81 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.88 11.88 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.82 11.82 0 0 0-3.48-8.413Z"/></svg></button>
+    <button class="whatsapp-float pulse" id="waToggle" type="button" aria-label="WhatsApp">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="white" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.81 11.81 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.88 11.88 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.82 11.82 0 0 0-3.48-8.413Z"/></svg>
+    </button>
   </div>
 
-  <button class="sticky-order-cta pulse js-open-order" type="button" data-i18n="stickyCta">اطلبي الصاك ديالك دابا</button>
-
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
-    window.SOUMI_PRODUCTS = [
-      {id:'p01', price:200, oldPrice:290, nameAr:'موديل Soumi 01 - عقيق أسود فاخر', nameFr:'Modèle Soumi 01 - Perles noires luxe', descAr:'صاك عقيق أسود بلمسة فخمة وسنسلة أنيقة.', descFr:'Sac perlé noir avec une finition luxueuse et une chaîne élégante.', images:['product-01-main.jpg','product-01-2.jpg','product-01-3.jpg']},
-      {id:'p02', price:260, oldPrice:350, nameAr:'موديل Soumi 02 - كروشي بيج ذهبي', nameFr:'Modèle Soumi 02 - Crochet beige doré', descAr:'صاك كروشي بيج ناعم مع سنسلة ذهبية.', descFr:'Sac crochet beige doux avec chaîne dorée.', images:['product-02-main.jpg','product-02-2.jpg','product-02-3.jpg','product-02-4.jpg']},
-      {id:'p03', price:260, oldPrice:350, nameAr:'موديل Soumi 03 - كروشي أخضر', nameFr:'Modèle Soumi 03 - Crochet vert', descAr:'موديل أخضر أنيق وعملي بتفاصيل مخدومة باليد.', descFr:'Sac crochet vert élégant et pratique, travaillé à la main.', images:['product-03-main.jpg','product-03-2.jpg','product-03-3.jpg','product-03-4.jpg']},
-      {id:'p04', price:400, oldPrice:550, nameAr:'موديل Soumi 04 - لؤلؤ شامبانيا', nameFr:'Modèle Soumi 04 - Perles champagne', descAr:'بياسة لؤلؤ فاخرة للمناسبات والخرجات الراقية.', descFr:'Pièce perlée champagne luxueuse pour soirées et occasions élégantes.', images:['product-04-main.jpg','product-04-2.jpg','product-04-3.jpg','product-04-4.jpg']},
-      {id:'p05', price:260, oldPrice:350, nameAr:'موديل Soumi 05 - كروشي أسود دائري', nameFr:'Modèle Soumi 05 - Crochet noir rond', descAr:'صاك أسود كروشي بيد قوية وتفاصيل ذهبية.', descFr:'Sac noir crochet avec poignée solide et détails dorés.', images:['product-05-main.jpg','product-05-2.jpg','product-05-3.jpg','product-05-4.jpg']},
-      {id:'p06', price:260, oldPrice:350, nameAr:'موديل Soumi 06 - صاك أسود صغير', nameFr:'Modèle Soumi 06 - Petit sac noir', descAr:'موديل صغير أنيق كيكمّل اللوك اليومي والمناسبات.', descFr:'Petit modèle chic pour compléter le look quotidien ou habillé.', images:['product-06-main.jpg','product-06-2.jpg','product-06-3.jpg']},
-      {id:'p07', price:400, oldPrice:550, nameAr:'موديل Soumi 07 - عقيق أسود بمقبض ذهبي', nameFr:'Modèle Soumi 07 - Perles noires poignée dorée', descAr:'صاك عقيق مستف حبة حبة بمظهر راقي ومتين.', descFr:'Sac perlé noir rangé à la main, élégant et solide.', images:['product-07-main.jpg','product-07-2.jpg','product-07-3.jpg','product-07-4.jpg']},
-      {id:'p08', price:260, oldPrice:350, nameAr:'موديل Soumi 08 - كروشي طوبي فاخر', nameFr:'Modèle Soumi 08 - Crochet taupe luxe', descAr:'لون طوبي هادئ مع قفل ذهبي وسنسلة أنيقة.', descFr:'Coloris taupe doux avec fermoir doré et chaîne élégante.', images:['product-08-main.jpg','product-08-2.jpg','product-08-3.jpg']},
-      {id:'p09', price:260, oldPrice:350, nameAr:'موديل Soumi 09 - كروشي أسود كلاسيكي', nameFr:'Modèle Soumi 09 - Crochet noir classique', descAr:'صاك أسود كلاسيكي بتصميم عملي وفخم.', descFr:'Sac noir classique avec design pratique et premium.', images:['product-09-main.jpg','product-09-2.jpg','product-09-3.jpg','product-09-4.jpg']}
-    ];
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "6565128a-14fe-46c3-be87-745cfd90b264",
+        safari_web_id: "web.onesignal.auto.0dd8fdab-49d8-437b-ac06-36c9d15991be",
+        notifyButton: { enable: true },
+        allowLocalhostAsSecureOrigin: true
+      });
+    });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>

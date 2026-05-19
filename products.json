@@ -1,0 +1,227 @@
+[
+  {
+    "id": "p01",
+    "price": 200,
+    "oldPrice": 290,
+    "name": {
+      "ar": "موديل Noir Prestige - عقيق أسود فاخر",
+      "fr": "Modèle Noir Prestige - Perles noires luxe"
+    },
+    "description": {
+      "ar": "صاك عقيق أسود براق، مستف حبة بحبة بلمسة ذهبية كتزيد اللوك فخامة وأناقة للمناسبات والخرجات الخاصة.",
+      "fr": "Sac en perles noires brillantes, monté perle par perle avec une finition dorée qui donne une allure chic et raffinée."
+    },
+    "images": [
+      "assets/img/p01/main.jpg",
+      "assets/img/p01/2.jpg",
+      "assets/img/p01/3.jpg"
+    ]
+  },
+  {
+    "id": "p02",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Beige Gold - كروشي بيج ذهبي",
+      "fr": "Modèle Beige Gold - Crochet beige doré"
+    },
+    "description": {
+      "ar": "لون بيج دافئ وسنسلة ذهبية راقية، موديل هادئ وفخم كيتناسب مع الجلابة، القفطان وحتى الستايل العصري.",
+      "fr": "Un beige doux avec chaîne dorée élégante; un modèle raffiné qui accompagne aussi bien les tenues traditionnelles que modernes."
+    },
+    "images": [
+      "assets/img/p02/main.jpg",
+      "assets/img/p02/2.jpg",
+      "assets/img/p02/3.jpg",
+      "assets/img/p02/4.jpg"
+    ]
+  },
+  {
+    "id": "p03",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Green Charm - كروشي أخضر أنيق",
+      "fr": "Modèle Green Charm - Crochet vert élégant"
+    },
+    "description": {
+      "ar": "صاك كروشي أخضر بستايل منعش ومميز، مخدوم بعناية باش يعطيك لمسة مختلفة ومناسبة لكل نهار.",
+      "fr": "Sac crochet vert au style frais et distingué, soigneusement travaillé pour apporter une touche unique au quotidien."
+    },
+    "images": [
+      "assets/img/p03/main.jpg",
+      "assets/img/p03/2.jpg",
+      "assets/img/p03/3.jpg",
+      "assets/img/p03/4.jpg"
+    ]
+  },
+  {
+    "id": "p04",
+    "price": 400,
+    "oldPrice": 550,
+    "name": {
+      "ar": "موديل Champagne Pearls - لؤلؤ شامبانيا",
+      "fr": "Modèle Champagne Pearls - Perles champagne"
+    },
+    "description": {
+      "ar": "تحفة لؤلؤية فاخرة بلون شامبانيا، مثالية للسهرات والمناسبات الراقية، كتخطف الأنظار من أول نظرة.",
+      "fr": "Une pièce perlée champagne haut de gamme, parfaite pour les soirées et les occasions élégantes, avec un éclat qui attire le regard."
+    },
+    "images": [
+      "assets/img/p04/main.jpg",
+      "assets/img/p04/2.jpg",
+      "assets/img/p04/3.jpg",
+      "assets/img/p04/4.jpg"
+    ]
+  },
+  {
+    "id": "p05",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Black Crochet - كروشي أسود كلاسيكي",
+      "fr": "Modèle Black Crochet - Crochet noir classique"
+    },
+    "description": {
+      "ar": "صاك أسود كروشي بتصميم عملي وقوي، فيه فخامة اللون الأسود وتفاصيل ذهبية كتخليه اختيار رابح.",
+      "fr": "Sac crochet noir au design pratique et solide, avec l’élégance intemporelle du noir et des détails dorés."
+    },
+    "images": [
+      "assets/img/p05/main.jpg",
+      "assets/img/p05/2.jpg",
+      "assets/img/p05/3.jpg",
+      "assets/img/p05/4.jpg"
+    ]
+  },
+  {
+    "id": "p06",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Mini Noir - صاك أسود صغير",
+      "fr": "Modèle Mini Noir - Petit sac noir"
+    },
+    "description": {
+      "ar": "موديل صغير وخفيف، مناسب للخرجات اليومية والمناسبات، كيجمع بين البساطة والفخامة فحجم عملي.",
+      "fr": "Petit modèle léger et chic, parfait pour les sorties et les occasions, combinant simplicité luxueuse et format pratique."
+    },
+    "images": [
+      "assets/img/p06/main.jpg",
+      "assets/img/p06/2.jpg",
+      "assets/img/p06/3.jpg"
+    ]
+  },
+  {
+    "id": "p07",
+    "price": 400,
+    "oldPrice": 550,
+    "name": {
+      "ar": "موديل Golden Handle - عقيق أسود بمقبض ذهبي",
+      "fr": "Modèle Golden Handle - Perles noires poignée dorée"
+    },
+    "description": {
+      "ar": "صاك عقيق فاخر بمقبض ذهبي راقي، تصميم قوي وملفت كيعاونك تباني متميزة فكل مناسبة.",
+      "fr": "Sac perlé premium avec poignée dorée raffinée, un design solide et remarquable pour une présence élégante."
+    },
+    "images": [
+      "assets/img/p07/main.jpg",
+      "assets/img/p07/2.jpg",
+      "assets/img/p07/3.jpg",
+      "assets/img/p07/4.jpg"
+    ]
+  },
+  {
+    "id": "p08",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Taupe Luxe - كروشي طوبي فاخر",
+      "fr": "Modèle Taupe Luxe - Crochet taupe luxueux"
+    },
+    "description": {
+      "ar": "لون طوبي ناعم وراقي مع خدمة كروشي متقونة، اختيار أنيق للمرأة لي كتبغي البساطة الفاخرة.",
+      "fr": "Coloris taupe doux et raffiné avec un crochet soigné, idéal pour celles qui aiment la simplicité luxueuse."
+    },
+    "images": [
+      "assets/img/p08/main.jpg",
+      "assets/img/p08/2.jpg",
+      "assets/img/p08/3.jpg"
+    ]
+  },
+  {
+    "id": "p09",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Classic Noir - كروشي أسود راقي",
+      "fr": "Modèle Classic Noir - Crochet noir raffiné"
+    },
+    "description": {
+      "ar": "صاك أسود كلاسيكي بتوازن مثالي بين العملية والفخامة، كيناسب بزاف اللوكات وكيزيدها أناقة.",
+      "fr": "Sac noir classique, équilibre parfait entre praticité et luxe, facile à associer à plusieurs looks élégants."
+    },
+    "images": [
+      "assets/img/p09/main.jpg",
+      "assets/img/p09/2.jpg",
+      "assets/img/p09/3.jpg",
+      "assets/img/p09/4.jpg"
+    ]
+  },
+  {
+    "id": "p10",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Noir Minaudière - صاك كروشي أسود بقفل ذهبي",
+      "fr": "Modèle Noir Minaudière - Crochet noir fermoir doré"
+    },
+    "description": {
+      "ar": "موديل أسود صغير وفاخر بقفل ذهبي مستوحى من حقائب السهرات، كيعطي لمسة ملكية وأنيقة بلا مجهود.",
+      "fr": "Petit modèle noir sophistiqué avec fermoir doré, inspiré des sacs de soirée pour une touche royale et élégante."
+    },
+    "images": [
+      "assets/img/p10/main.jpg",
+      "assets/img/p10/2.jpg",
+      "assets/img/p10/3.jpg",
+      "assets/img/p10/4.jpg"
+    ]
+  },
+  {
+    "id": "p11",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Pearl Basket - عقيق أبيض وأسود",
+      "fr": "Modèle Pearl Basket - Perles blanches et noires"
+    },
+    "description": {
+      "ar": "صاك عقيق أبيض وأسود بتفاصيل براقة ومقبض من العقيق، قطعة مميزة كتجمع بين الجرأة والأنوثة.",
+      "fr": "Sac en perles blanches et noires avec anse perlée, une pièce audacieuse et féminine aux détails lumineux."
+    },
+    "images": [
+      "assets/img/p11/main.jpg",
+      "assets/img/p11/2.jpg",
+      "assets/img/p11/3.jpg",
+      "assets/img/p11/4.jpg"
+    ]
+  },
+  {
+    "id": "p12",
+    "price": 260,
+    "oldPrice": 350,
+    "name": {
+      "ar": "موديل Ivory Tassel - كروشي عاجي بشرّابة",
+      "fr": "Modèle Ivory Tassel - Crochet ivoire à pampille"
+    },
+    "description": {
+      "ar": "صاك كروشي عاجي ناعم بشرّابة يدوية، ستايل بوهو فاخر ومثالي للصيف، السفر، والخرجات الراقية.",
+      "fr": "Sac crochet ivoire avec pampille artisanale, un style bohème luxueux parfait pour l’été, les voyages et les sorties chics."
+    },
+    "images": [
+      "assets/img/p12/main.jpg",
+      "assets/img/p12/2.jpg",
+      "assets/img/p12/3.jpg",
+      "assets/img/p12/4.jpg"
+    ]
+  }
+]
