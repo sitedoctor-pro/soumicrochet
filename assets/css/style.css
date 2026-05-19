@@ -286,3 +286,17 @@ p{color:var(--muted);font-size:1.05rem;line-height:1.88}
   .thankyou-product{grid-template-columns:1fr;text-align:center}
   .thankyou-product img{margin-inline:auto}
 }
+
+
+/* Phase 2 notification permission modal */
+.notification-modal{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:18px;opacity:0;pointer-events:none;transition:opacity .28s ease;}
+.notification-modal.show{opacity:1;pointer-events:auto;}
+.notification-mask{position:absolute;inset:0;background:rgba(36,18,21,.48);backdrop-filter:blur(12px);}
+.notification-card{position:relative;width:min(520px,100%);padding:30px;border-radius:30px;text-align:center;box-shadow:0 26px 80px rgba(122,23,48,.22);transform:translateY(18px) scale(.96);transition:transform .32s cubic-bezier(.2,.8,.2,1);}
+.notification-modal.show .notification-card{transform:translateY(0) scale(1);}
+.notification-icon{width:70px;height:70px;margin:0 auto 12px;border-radius:22px;display:grid;place-items:center;font-size:2rem;background:linear-gradient(135deg,rgba(122,23,48,.14),rgba(216,173,102,.18));}
+.notification-card h2{margin:6px 0 10px;color:var(--primary);}
+.notification-card p{margin:0 auto 14px;max-width:430px;}
+.notification-warning{border:1px solid rgba(122,23,48,.2);background:#fff4e7;border-radius:16px;padding:10px 12px;color:var(--primary);font-weight:800;}
+.notification-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px;}
+@media(max-width:680px){.notification-card{padding:24px 18px;border-radius:26px}.notification-actions .btn{width:100%;}}
