@@ -1,11 +1,11 @@
+const SUPABASE_URL = 'https://axgcycsojorwztwlfprg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_1YuKU9O3wuH1Zbikx_OonQ_ayCIjmSR';
+window.soumiSupabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
 const $ = (id) => document.getElementById(id);
 const ASSET_IMG = 'assets/img/';
 const STORE_IMAGE_BASE = 'soumicrochet.store/';
 const WHATSAPP_NUMBER = '212662711995';
-const SUPABASE_URL = 'https://axgcycsojorwztwlfprg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_1YuKU9O3wuH1Zbikx_OonQ_ayCIjmSR';
-const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-const SESSION_ID_KEY = 'soumi_session_id';
 
 let products = [];
 let currentLang = localStorage.getItem('soumi_lang') || 'fr';
@@ -15,150 +15,77 @@ let modalProduct = null;
 let modalImageIndex = 0;
 let revealObserver;
 
-function ensureSessionId(){
-  let sessionId = localStorage.getItem(SESSION_ID_KEY);
-  if(!sessionId){
-    sessionId = (crypto.randomUUID ? crypto.randomUUID() : `soumi-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-    localStorage.setItem(SESSION_ID_KEY, sessionId);
+// --- NEW HELPERS ---
+function getSoumiVisitorId() {
+  let visitorId = localStorage.getItem('soumi_visitor_id');
+  if (!visitorId) {
+    visitorId = `visitor_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+    localStorage.setItem('soumi_visitor_id', visitorId);
+  }
+  return visitorId;
+}
+
+function getSoumiSessionId() {
+  let sessionId = sessionStorage.getItem('soumi_session_id');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+    sessionStorage.setItem('soumi_session_id', sessionId);
   }
   return sessionId;
 }
 
-function getOneSignalUserId(){
-  try{
-    if(window.OneSignal?.User?.PushSubscription?.id) return window.OneSignal.User.PushSubscription.id;
-    if(window.OneSignal?.User?.onesignalId) return window.OneSignal.User.onesignalId;
-  }catch(err){}
-  return localStorage.getItem('soumi_onesignal_user_id') || '';
+function escapeHTML(value = '') {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
-async function refreshOneSignalUserId(){
-  try{
-    const id = getOneSignalUserId();
-    if(id){
-      localStorage.setItem('soumi_onesignal_user_id', id);
-      await supabaseClient?.from('subscribers').insert({
-        onesignal_player_id: id,
-        city: $('customerCity')?.value || null,
-        device_info: {
-          platform: navigator.platform || 'web',
-          user_agent: navigator.userAgent || '',
-          language: navigator.language || '',
-          subscribed_at: new Date().toISOString()
-        }
-      });
-    }
-  }catch(err){ console.warn('OneSignal subscriber sync skipped', err); }
+async function getPublicIP() {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.ip || null;
+  } catch (_) { return null; }
 }
 
-let cachedGeo = null;
-async function getVisitorGeo(){
-  if(cachedGeo) return cachedGeo;
-  try{
-    const response = await fetch('https://ipapi.co/json/', { cache:'no-store' });
-    if(response.ok){
-      const data = await response.json();
-      cachedGeo = {
-        ip_address: data.ip || null,
-        city: data.city || null,
-        country: data.country_name || null,
-        region: data.region || null
-      };
-      return cachedGeo;
-    }
-  }catch(err){}
-  try{
-    const response = await fetch('https://api.ipify.org?format=json', { cache:'no-store' });
-    const data = response.ok ? await response.json() : {};
-    cachedGeo = { ip_address:data.ip || null, city:null, country:null, region:null };
-  }catch(err){
-    cachedGeo = { ip_address:null, city:null, country:null, region:null };
+async function getApproxCity() {
+  try {
+    const res = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.city || null;
+  } catch (_) { return null; }
+}
+
+function getSelectedProductImageUrl(product, imageIndex = 0) {
+  if (document.getElementById('selectedProductImage')?.value) {
+    return document.getElementById('selectedProductImage').value;
   }
-  return cachedGeo;
+  const image = product?.images?.[imageIndex] || product?.image || product?.mainImage || '';
+  if (!image) return '';
+  if (/^https?:\/\//i.test(image)) return image;
+  if (image.startsWith('assets/')) return `soumicrochet.store/${image}`;
+  return `soumicrochet.store/assets/img/${image}`;
 }
 
-function getTypedCity(){
-  return $('customerCity')?.value?.trim() || '';
-}
-
-function visitorActivity(eventType, extra={}){
-  return {
-    event_type:eventType,
-    page_url:window.location.href,
-    product_id:extra.product_id || extra.form_draft?.product_id || null,
-    product_name:extra.product_name || extra.form_draft?.product_name || null,
-    form_draft:extra.form_draft || null,
-    at:new Date().toISOString()
-  };
-}
-
-async function upsertVisitor(eventType, extra={}){
-  if(!supabaseClient) return;
-  try{
-    const geo = await getVisitorGeo();
-    const sessionId = ensureSessionId();
-    const typedCity = getTypedCity();
-    const city = typedCity || geo.city || null;
-    const activity = visitorActivity(eventType, extra);
-    const existingRaw = localStorage.getItem('soumi_activity_history');
-    const history = existingRaw ? JSON.parse(existingRaw) : [];
-    history.push(activity);
-    const cleanHistory = history.slice(-50);
-    localStorage.setItem('soumi_activity_history', JSON.stringify(cleanHistory));
-    await supabaseClient.from('visitors').upsert({
-      session_id: sessionId,
-      ip_address: geo.ip_address,
-      city,
-      inferred_city: geo.city,
-      typed_city: typedCity || null,
-      page_url: window.location.href,
-      onesignal_user_id: getOneSignalUserId() || null,
-      device_info: {
-        platform:navigator.platform || 'web',
-        user_agent:navigator.userAgent || '',
-        language:navigator.language || '',
-        screen:`${window.screen?.width || 0}x${window.screen?.height || 0}`
-      },
-      activity_history: cleanHistory,
-      last_event_type: eventType,
-      last_seen: new Date().toISOString()
-    }, { onConflict:'session_id' });
-  }catch(err){ console.warn('Visitor upsert skipped', err); }
-}
-
-async function trackEvent(eventType, extra={}){
-  if(!supabaseClient) return;
-  try{
-    const geo = await getVisitorGeo();
-    const typedCity = getTypedCity();
-    await upsertVisitor(eventType, extra);
-    await supabaseClient.from('analytics').insert({
-      session_id: ensureSessionId(),
-      ip_address: geo.ip_address,
-      city: typedCity || geo.city || null,
-      page_url: window.location.href,
-      event_type: eventType,
-      form_draft: extra.form_draft || null,
-      onesignal_user_id: getOneSignalUserId(),
-      time_spent_seconds: extra.time_spent_seconds || Math.max(1, Math.round((Date.now() - window.__soumiStartTime) / 1000))
+async function getOneSignalUserIdSafe() {
+  try {
+    if (!window.OneSignalDeferred) return null;
+    let playerId = null;
+    await window.OneSignalDeferred.push(async function (OneSignal) {
+      if (OneSignal.User?.PushSubscription?.id) {
+        playerId = OneSignal.User.PushSubscription.id;
+      } else if (OneSignal.User?.onesignalId) {
+        playerId = OneSignal.User.onesignalId;
+      }
     });
-  }catch(err){ console.warn('Analytics event skipped', err); }
+    return playerId;
+  } catch (_) { return null; }
 }
-
-function buildFormDraft(){
-  return {
-    customer_name: $('customerName')?.value || '',
-    phone: $('customerPhone')?.value || '',
-    city: $('customerCity')?.value || '',
-    address: $('customerAddress')?.value || '',
-    product_id: selectedProduct?.id || '',
-    product_name: selectedProduct ? productName(selectedProduct) : '',
-    price: selectedProduct?.price || 0,
-    selected_image: $('selectedProductImage')?.value || ''
-  };
-}
-window.__soumiStartTime = Date.now();
-
 
 const translations = {
   ar:{
@@ -185,7 +112,7 @@ const translations = {
     nameLabel:'الاسم الكامل',phoneLabel:'رقم الهاتف',cityLabel:'المدينة',addressLabel:'العنوان الكامل',
     submitBtn:'تأكيد الطلب',stickyCta:'اطلبي الصاك ديالك دابا',waIntro:'سلام، كيفاش نقدر نعاونك؟ اختاري جواب سريع:',
     footerText:'صيكان كروشي وعقيق مخدومين باليد فالمغرب. أناقة حرفية، توصيل سريع، والدفع عند الاستلام.',
-    policiesLink:'سياسة التوصيل والضمان',priceLabel:'الثمن',notifEyebrow:'تنبيهات خاصة',notifTitle:'فعّلي تنبيهات Soumi Crochet',notifText:'توصلّي بالجديد، تأكيد الطلب، والعروض المحدودة مباشرة فالهاتف ديالك.',notifWarning:'بعض المميزات ممكن تكون محدودة إلا بقات التنبيهات مطفّية.',notifActivate:'فعّلي التنبيهات',notifContinue:'كملي التصفح'
+    policiesLink:'سياسة التوصيل والضمان',priceLabel:'الثمن'
   },
   fr:{
     navProducts:'Produits',navStory:'Histoire',navReviews:'Avis',navFaq:'FAQ',navGuarantees:'Garanties',
@@ -211,13 +138,10 @@ const translations = {
     nameLabel:'Nom complet',phoneLabel:'Téléphone',cityLabel:'Ville',addressLabel:'Adresse complète',
     submitBtn:'Confirmer la commande',stickyCta:'Commander maintenant',waIntro:'Bonjour, comment pouvons-nous vous aider?',
     footerText:'Sacs crochet et perles faits main au Maroc. Élégance artisanale, livraison rapide, paiement à la réception.',
-    policiesLink:'Politiques & garanties',priceLabel:'Prix',notifEyebrow:'NOTIFICATIONS PRIVÉES',notifTitle:'Activez les notifications Soumi Crochet',notifText:'Recevez les nouveautés, confirmations et offres limitées directement sur votre appareil.',notifWarning:'Certaines fonctionnalités peuvent être limitées si les notifications restent désactivées.',notifActivate:'Activer les notifications',notifContinue:'Continuer la navigation'
+    policiesLink:'Politiques & garanties',priceLabel:'Prix'
   }
 };
 
-function escapeHTML(value){
-  return String(value || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-}
 function asset(path){ return path || ''; }
 function imageUrl(path){ return STORE_IMAGE_BASE + String(path || '').replace(/^\/+/,''); }
 function productName(p){ return p?.name?.[currentLang] || p?.name?.fr || p?.name?.ar || ''; }
@@ -233,17 +157,7 @@ function safeSet(id, value){ const el = $(id); if(el) el.textContent = value; }
 async function loadProducts(){
   const response = await fetch('products.json', {cache:'no-store'});
   if(!response.ok) throw new Error('products.json not found');
-  const data = await response.json();
-  if(!Array.isArray(data)) throw new Error('products.json must be an array');
-  products = data
-    .filter(p => p && p.id && p.name && p.description && Array.isArray(p.images) && p.images.length)
-    .map(p => ({
-      ...p,
-      price: Number(p.price || 0),
-      oldPrice: Number(p.oldPrice || p.price || 0),
-      images: p.images.filter(Boolean)
-    }));
-  if(!products.length) throw new Error('No valid products found');
+  products = await response.json();
   selectedProduct = products[0];
   modalProduct = products[0];
 }
@@ -311,12 +225,9 @@ function setSelectedProduct(product, imgIndex = 0){
   const file = selectedProduct.images[selectedImageIndex] || selectedProduct.images[0];
   const fullUrl = imageUrl(file);
   if($('selectedModelName')) $('selectedModelName').value = productName(selectedProduct);
+  if($('selectedProductId')) $('selectedProductId').value = selectedProduct.id;
   if($('selectedProductImage')) $('selectedProductImage').value = fullUrl;
   if($('selectedProductPrice')) $('selectedProductPrice').value = priceFullText(selectedProduct);
-  if($('selectedProductId')) $('selectedProductId').value = selectedProduct.id || '';
-  if($('oneSignalUserId')) $('oneSignalUserId').value = getOneSignalUserId();
-  if($('sessionId')) $('sessionId').value = ensureSessionId();
-  if($('sourcePage')) $('sourcePage').value = window.location.href;
   if($('selectedPreview')) {$('selectedPreview').src = asset(file); $('selectedPreview').alt = productName(selectedProduct);}
   safeSet('selectedLabel', productName(selectedProduct));
   if($('selectedPriceLabel')) $('selectedPriceLabel').innerHTML = priceHtml(selectedProduct);
@@ -331,7 +242,6 @@ function openProductModal(id){
   modalProduct = p;
   modalImageIndex = 0;
   renderProductModal();
-  trackEvent('product_view', { form_draft: { product_id: p.id, product_name: productName(p), price: p.price } });
   openModal('productModal');
 }
 
@@ -369,7 +279,7 @@ function renderProductModal(){
     closeModal('productModal');
     showStep(1);
     renderPicker();
-    openModal('orderModal');
+    openModalWithScrollLock($('orderModal')); // USING NEW SCROLL LOCK LOGIC
   });
   setupSwipe(node.querySelector('.modal-carousel'), (dir) => changeModalImage(dir));
 }
@@ -435,206 +345,115 @@ function normalizePhone(value){
   return v;
 }
 
+// --- NEW MODAL SCROLL FIX HELPERS ---
+function lockBodyScroll() { document.body.classList.add('no-scroll'); }
+function unlockBodyScrollIfNoModalOpen() {
+  const anyOpenModal = document.querySelector('.modal.active, .bottom-sheet.active, [aria-hidden="false"].modal, [aria-hidden="false"].bottom-sheet, .modal.show');
+  if (!anyOpenModal) document.body.classList.remove('no-scroll');
+}
+function openModalWithScrollLock(modal) {
+  if (!modal) return;
+  modal.classList.add('active');
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden', 'false');
+  lockBodyScroll();
+}
+function closeModalWithScrollUnlock(modal) {
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden', 'true');
+  setTimeout(unlockBodyScrollIfNoModalOpen, 50);
+}
+
+function initModalScrollFix() {
+  const openReviewBtn = document.getElementById('openReviewModalBtn');
+  const reviewModal = document.getElementById('reviewModal');
+  const orderSheet = document.getElementById('orderModal');
+
+  openReviewBtn?.addEventListener('click', () => { openModalWithScrollLock(reviewModal); });
+  document.querySelectorAll('[data-close-review-modal]').forEach((btn) => { btn.addEventListener('click', () => { closeModalWithScrollUnlock(reviewModal); }); });
+  document.querySelectorAll('.js-open-order, [data-open-order], [data-open-sheet]').forEach((btn) => { btn.addEventListener('click', () => { openModalWithScrollLock(orderSheet); }); });
+  document.querySelectorAll('[data-close-sheet], [data-close="order"], #closeOrderSheet').forEach((btn) => { btn.addEventListener('click', () => { closeModalWithScrollUnlock(orderSheet); }); });
+}
+
 function initOrderForm(){
   document.querySelectorAll('.js-open-order').forEach(btn => btn.addEventListener('click', () => {
     showStep(1);
     renderPicker();
     setSelectedProduct(selectedProduct || products[0], selectedImageIndex);
-    openModal('orderModal');
+    openModalWithScrollLock($('orderModal'));
   }));
   $('closeProductModal')?.addEventListener('click', () => closeModal('productModal'));
-  $('closeOrderSheet')?.addEventListener('click', () => closeModal('orderModal'));
   document.querySelectorAll('[data-close="product"]').forEach(x => x.addEventListener('click', () => closeModal('productModal')));
-  document.querySelectorAll('[data-close="order"]').forEach(x => x.addEventListener('click', () => closeModal('orderModal')));
+  
   document.querySelectorAll('.next-step').forEach(btn => btn.addEventListener('click', () => {
     const current = Number(document.querySelector('.form-step.active')?.dataset.step || 1);
     if(validateStep(current)) showStep(Number(btn.dataset.next));
   }));
   document.querySelectorAll('.prev-step').forEach(btn => btn.addEventListener('click', () => showStep(Number(btn.dataset.prev))));
-  let draftTimer = null;
-  ['customerName','customerPhone','customerCity','customerAddress'].forEach(id => {
-    $(id)?.addEventListener('input', () => {
-      clearTimeout(draftTimer);
-      draftTimer = setTimeout(() => trackEvent('form_draft', { form_draft: buildFormDraft() }), 650);
-    });
-  });
 
-
-  $('orderForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if(!supabaseClient){
-      alert(currentLang === 'ar' ? 'تعذر الاتصال بقاعدة البيانات. المرجو المحاولة لاحقاً.' : 'Connexion à la base de données indisponible. Réessayez plus tard.');
-      return;
-    }
-    setSelectedProduct(selectedProduct, selectedImageIndex);
-    const step3Inputs = Array.from(document.querySelectorAll('.form-step[data-step="3"] input[required]'));
-    for(const input of step3Inputs){ if(!input.value.trim()){ input.focus(); return; } }
-
-    const selectedImageFile = selectedProduct.images[selectedImageIndex] || selectedProduct.images[0];
-    const payload = {
-      name: $('customerName')?.value || '',
-      phone: $('customerPhone')?.value || '',
-      city: $('customerCity')?.value || '',
-      address: $('customerAddress')?.value || '',
-      product: productName(selectedProduct),
-      product_id: selectedProduct.id,
-      price: priceText(selectedProduct),
-      numeric_price: selectedProduct.price,
-      oldPrice: oldPriceText(selectedProduct),
-      image: $('selectedProductImage')?.value || imageUrl(selectedImageFile),
-      imageAsset: asset(selectedImageFile),
-      product_image_url: asset(selectedImageFile),
-      session_id: ensureSessionId(),
-      onesignal_user_id: getOneSignalUserId()
-    };
-    const encodedPayload = JSON.stringify(payload);
-    sessionStorage.setItem('soumi_last_order', encodedPayload);
-    localStorage.setItem('soumi_last_order_backup', encodedPayload);
-    try{ history.replaceState({soumiLastOrder: payload}, document.title, window.location.href); }catch(err){}
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalText = submitBtn ? submitBtn.textContent : '';
-    if(submitBtn){
-      submitBtn.textContent = currentLang === 'ar' ? 'جاري حفظ الطلب...' : 'Enregistrement...';
-      submitBtn.disabled = true;
-    }
-
-    try{
-      await refreshOneSignalUserId();
-      const { error } = await supabaseClient.from('orders').insert({
-        customer_name: payload.name,
-        phone: normalizePhone(payload.phone),
-        city: payload.city,
-        address: payload.address,
-        product_id: payload.product_id,
-        product_name: payload.product,
-        price: payload.numeric_price,
-        product_image_url: payload.product_image_url || payload.imageAsset || payload.image,
-        status: 'pending',
-        onesignal_user_id: payload.onesignal_user_id,
-        session_id: payload.session_id
-      });
-      if(error) throw error;
-      await trackEvent('form_submit', { form_draft: buildFormDraft() });
-      window.location.href = 'thankyou.html';
-    }catch(err){
-      console.error('Supabase order insert failed:', err);
-      alert(currentLang === 'ar' ? 'وقع مشكل فحفظ الطلب. المرجو المحاولة أو التواصل عبر واتساب.' : 'Erreur lors de l’enregistrement. Veuillez réessayer ou contacter WhatsApp.');
-      if(submitBtn){ submitBtn.textContent = originalText; submitBtn.disabled = false; }
-    }
-  });
+  // USING THE NEW SUBMIT HANDLER
+  $('orderForm')?.addEventListener('submit', handleOrderSubmit);
 }
 
+// --- NEW HANDLE ORDER SUBMIT LOGIC ---
+async function handleOrderSubmit(event) {
+  event.preventDefault();
+  if (!window.soumiSupabase) { alert('Supabase client not found.'); return; }
 
-function initReviewModal(){
-  const openBtn = $('openReviewModalBtn');
-  const closeBtn = $('closeReviewModal');
-  const form = $('reviewForm');
-  const message = $('reviewFormMessage');
+  const form = event.currentTarget;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn?.textContent || '';
 
-  openBtn?.addEventListener('click', () => openModal('reviewModal'));
-  closeBtn?.addEventListener('click', () => closeModal('reviewModal'));
-  document.querySelectorAll('[data-close="review"]').forEach(x => x.addEventListener('click', () => closeModal('reviewModal')));
+  const product = window.selectedProduct || selectedProduct || window.currentProduct || {};
+  const imageIndex = Number(window.selectedImageIndex ?? selectedImageIndex ?? 0) || 0;
+  
+  const productNameTxt = product?.name?.[currentLang] || product?.name?.fr || product?.name?.ar || document.getElementById('selectedModelName')?.value || '';
+  const productId = product?.id || document.getElementById('selectedProductId')?.value || '';
+  const price = Number(product?.price || document.getElementById('selectedProductPrice')?.value || 0) || 0;
 
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if(!supabaseClient){
-      if(message) message.textContent = currentLang === 'ar' ? 'تعذر الاتصال. المرجو المحاولة لاحقاً.' : 'Connexion indisponible. Réessayez plus tard.';
-      return;
-    }
+  const customerName = document.getElementById('customerName')?.value?.trim() || '';
+  const phone = document.getElementById('customerPhone')?.value?.trim() || '';
+  const city = document.getElementById('customerCity')?.value?.trim() || '';
+  const address = document.getElementById('customerAddress')?.value?.trim() || '';
 
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn ? submitBtn.textContent : '';
-    if(submitBtn){
-      submitBtn.disabled = true;
-      submitBtn.textContent = currentLang === 'ar' ? 'جاري الإرسال...' : 'Envoi en cours...';
-    }
-    if(message) message.textContent = '';
+  if (!customerName || !phone || !city || !address || !productId || !productNameTxt || !price) {
+    alert('Merci de compléter toutes les informations de commande.');
+    return;
+  }
 
-    const payload = {
-      reviewer_name: $('reviewerName')?.value.trim() || '',
-      phone: normalizePhone($('reviewerPhone')?.value || ''),
-      city: $('reviewerCity')?.value.trim() || '',
-      rating: Number(document.querySelector('input[name="rating"]:checked')?.value || 5),
-      review_text: $('reviewText')?.value.trim() || '',
-      is_published: false
-    };
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'جاري الإرسال... / Envoi...'; }
 
-    if(!payload.reviewer_name || !payload.phone || !payload.city || !payload.review_text){
-      if(message) message.textContent = currentLang === 'ar' ? 'كملي جميع المعلومات.' : 'Veuillez remplir tous les champs.';
-      if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = originalText; }
-      return;
-    }
+  const onesignalUserId = await getOneSignalUserIdSafe();
+  const sessionId = getSoumiSessionId();
+  const imageUrl = getSelectedProductImageUrl(product, imageIndex);
 
-    try{
-      const { error } = await supabaseClient.from('reviews').insert(payload);
-      if(error) throw error;
-      if(message) message.textContent = currentLang === 'ar' ? 'شكراً! غادي نراجعو الرأي ديالك قبل النشر.' : 'Merci! Votre avis sera vérifié avant publication.';
-      form.reset();
-      const rating5 = $('rating5');
-      if(rating5) rating5.checked = true;
-      setTimeout(() => {
-        closeModal('reviewModal');
-        if(message) message.textContent = '';
-        if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = originalText; }
-      }, 2000);
-    }catch(err){
-      console.error('Review insert failed:', err);
-      if(message) message.textContent = currentLang === 'ar' ? 'وقع مشكل فإرسال الرأي. عاودي المحاولة.' : 'Erreur lors de l’envoi. Réessayez.';
-      if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = originalText; }
-    }
-  });
-}
-
-function initNotificationPrompt(){
-  const modal = $('notificationModal');
-  const activate = $('activateNotificationsBtn');
-  const cont = $('continueBrowsingBtn');
-  const warning = $('notificationWarning');
-  if(!modal || localStorage.getItem('soumi_notification_prompt_seen') === 'yes') return;
-  const show = () => {
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden','false');
+  const orderPayload = {
+    customer_name: customerName,
+    phone,
+    city,
+    address,
+    product_id: productId,
+    product_name: productNameTxt,
+    price,
+    status: 'pending',
+    onesignal_user_id: onesignalUserId,
+    session_id: sessionId,
+    image_url: imageUrl
   };
-  const close = () => {
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden','true');
-    localStorage.setItem('soumi_notification_prompt_seen','yes');
-  };
-  setTimeout(show, 900);
-  cont?.addEventListener('click', close);
-  document.querySelectorAll('[data-close="notification"]').forEach(x => x.addEventListener('click', close));
-  activate?.addEventListener('click', async () => {
-    try{
-      if(window.OneSignalDeferred){
-        window.OneSignalDeferred.push(async function(OneSignal){
-          await OneSignal.Notifications.requestPermission();
-          await refreshOneSignalUserId();
-        });
-      }else if(window.OneSignal?.Notifications?.requestPermission){
-        await window.OneSignal.Notifications.requestPermission();
-        await refreshOneSignalUserId();
-      }
-      close();
-    }catch(err){
-      if(warning) warning.hidden = false;
-    }
-  });
-  if('Notification' in window && Notification.permission === 'denied' && warning) warning.hidden = false;
-}
 
-function initActivityTracking(){
-  document.addEventListener('click', (e) => {
-    const target = e.target.closest('a,button,[data-product-id],[data-order-product]');
-    if(!target) return;
-    const label = target.getAttribute('data-i18n') || target.textContent?.trim()?.slice(0,80) || target.tagName;
-    const productId = target.getAttribute('data-product-id') || target.getAttribute('data-order-product') || null;
-    upsertVisitor('click', { form_draft:{ label, product_id:productId } });
-  }, { passive:true });
-  window.addEventListener('beforeunload', () => {
-    const payload = JSON.stringify({ session_id:ensureSessionId(), event_type:'leave', page_url:window.location.href });
-    navigator.sendBeacon?.('/__soumi_activity__', payload);
-  });
+  try {
+    const { error } = await window.soumiSupabase.from('orders').insert(orderPayload);
+    if (error) throw error;
+    sessionStorage.setItem('soumi_last_order', JSON.stringify(orderPayload));
+    await trackPageView(true);
+    window.location.href = 'thankyou.html';
+  } catch (error) {
+    console.error('Order insert failed:', error);
+    alert('وقع مشكل فإرسال الطلب، المرجو المحاولة. / Erreur lors de l’envoi.');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalText; }
+  }
 }
 
 function initMenu(){
@@ -752,13 +571,294 @@ function observeReveal(){
   });
 }
 
-async function init(){
+// --- NEW PUBLISHED REVIEWS ---
+async function loadPublishedReviews() {
+  const container = document.getElementById('supabaseReviews');
+  if (!container || !window.soumiSupabase) return;
+  container.innerHTML = '';
+  try {
+    const { data, error } = await window.soumiSupabase.from('reviews').select('reviewer_name, city, rating, review_text, created_at').eq('is_published', true).order('created_at', { ascending: false }).limit(12);
+    if (error || !Array.isArray(data) || data.length === 0) { container.innerHTML = ''; return; }
+    const fragment = document.createDocumentFragment();
+    data.forEach((review) => {
+      const rating = Math.max(1, Math.min(5, Number(review.rating) || 5));
+      const card = document.createElement('article');
+      card.className = 'review-card glass reveal';
+      card.innerHTML = `<div class="stars">${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}</div><h3>${escapeHTML(review.reviewer_name || 'Cliente')} - ${escapeHTML(review.city || 'Maroc')}</h3><p>${escapeHTML(review.review_text || '')}</p>`;
+      fragment.appendChild(card);
+    });
+    container.appendChild(fragment);
+    observeReveal();
+  } catch (_) { container.innerHTML = ''; }
+}
+
+// --- NEW ANALYTICS ---
+let soumiPageStartedAt = Date.now();
+async function trackPageView(finalUpdate = false) {
+  if (!window.soumiSupabase) return;
+  const visitorId = getSoumiVisitorId();
+  const sessionId = getSoumiSessionId();
+  const seconds = Math.max(0, Math.round((Date.now() - soumiPageStartedAt) / 1000));
+  try {
+    const [{ data: existing }, ipAddress, approxCity] = await Promise.all([
+      window.soumiSupabase.from('analytics').select('activity_history, time_spent_seconds, ip_address, city').eq('visitor_id', visitorId).maybeSingle(),
+      getPublicIP(), getApproxCity()
+    ]);
+    const oldHistory = Array.isArray(existing?.activity_history) ? existing.activity_history : [];
+    const pageViewEvent = { type: 'page_view', page_url: window.location.href, at: new Date().toISOString() };
+    const nextHistory = oldHistory.concat(pageViewEvent).slice(-100);
+    await window.soumiSupabase.from('analytics').upsert({
+      visitor_id: visitorId, session_id: sessionId, ip_address: existing?.ip_address || ipAddress, city: existing?.city || approxCity,
+      page_url: window.location.href, time_spent_seconds: Math.max(Number(existing?.time_spent_seconds) || 0, seconds),
+      last_seen: new Date().toISOString(), activity_history: nextHistory
+    }, { onConflict: 'visitor_id' });
+  } catch (error) { console.warn('Soumi analytics page_view failed:', error); }
+}
+window.addEventListener('beforeunload', () => { trackPageView(true); });
+
+// --- REVIEW SUBMIT HANDLER ---
+const reviewForm = document.getElementById('reviewForm');
+if(reviewForm) {
+  reviewForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if(!window.soumiSupabase) return;
+    const btn = reviewForm.querySelector('button[type="submit"]');
+    const status = document.getElementById('reviewStatus');
+    if(btn) btn.disabled = true;
+    try {
+      const payload = {
+        reviewer_name: document.getElementById('reviewerName').value,
+        phone: document.getElementById('reviewPhone').value,
+        city: document.getElementById('reviewCity').value,
+        rating: Number(document.getElementById('reviewRating').value),
+        review_text: document.getElementById('reviewText').value,
+        is_published: false,
+        status: 'pending'
+      };
+      await window.soumiSupabase.from('reviews').insert(payload);
+      if(status) status.textContent = "Merci! Votre avis a été envoyé.";
+      reviewForm.reset();
+      setTimeout(() => closeModalWithScrollUnlock(document.getElementById('reviewModal')), 2000);
+    } catch(err) {
+      if(status) status.textContent = "Erreur. Veuillez réessayer.";
+    } finally {
+      if(btn) btn.disabled = false;
+    }
+  });
+}
+
+
+/* --- PUSH NOTIFICATION PROMPT + SUBSCRIBER REGISTRATION --- */
+function pushCopy(){
+  return currentLang === 'ar'
+    ? {
+        eyebrow:'إشعارات Soumi Crochet',
+        title:'🔔 فعّلي الإشعارات ديال Soumi Crochet',
+        text:'باش توصلك الموديلات الجديدة، العروض المحدودة، وتتبع الطلب ديالك مباشرة.',
+        activate:'تفعيل الإشعارات',
+        continue:'نكمل التصفح',
+        denied:'ما تفعلاتش الإشعارات. بعض التنبيهات بحال تتبع الطلب ممكن ما توصلكش.'
+      }
+    : {
+        eyebrow:'SOUMI NOTIFICATIONS',
+        title:'🔔 Activez les notifications Soumi Crochet',
+        text:'Recevez les nouveautés, offres limitées et le suivi de votre commande directement.',
+        activate:'Activer les notifications',
+        continue:'Continuer sans notifications',
+        denied:'Notifications non activées. Certaines alertes comme le suivi de commande peuvent être limitées.'
+      };
+}
+
+function syncPushPromptLanguage(){
+  const c = pushCopy();
+  safeSet('pushPromptEyebrow', c.eyebrow);
+  safeSet('pushPromptTitle', c.title);
+  safeSet('pushPromptText', c.text);
+  safeSet('activatePushBtn', c.activate);
+  safeSet('continuePushBtn', c.continue);
+}
+
+function showPushPrompt(){
+  const modal = $('pushPromptModal');
+  if(!modal) return;
+  syncPushPromptLanguage();
+  openModalWithScrollLock(modal);
+}
+
+function closePushPrompt(){
+  closeModalWithScrollUnlock($('pushPromptModal'));
+  sessionStorage.setItem('soumi_push_prompt_seen', '1');
+}
+
+async function getOneSignalPlayerId(){
   try{
-    await loadProducts();
-  }catch(err){
-    console.error(err);
-    products = [];
+    let playerId = null;
+    if(!window.OneSignalDeferred) return null;
+    await window.OneSignalDeferred.push(async function(OneSignal){
+      playerId =
+        OneSignal?.User?.PushSubscription?.id ||
+        OneSignal?.User?.onesignalId ||
+        null;
+    });
+    return playerId;
+  }catch(_){
+    return null;
   }
+}
+
+async function trackActivityEvent(type, meta = {}){
+  if(!window.soumiSupabase) return;
+  const visitorId = getSoumiVisitorId();
+  const sessionId = getSoumiSessionId();
+
+  try{
+    const { data: existing } = await window.soumiSupabase
+      .from('analytics')
+      .select('activity_history, time_spent_seconds, ip_address, city, onesignal_user_id')
+      .eq('visitor_id', visitorId)
+      .maybeSingle();
+
+    const history = Array.isArray(existing?.activity_history) ? existing.activity_history : [];
+    const event = {
+      type,
+      page_url: window.location.href,
+      at: new Date().toISOString(),
+      meta
+    };
+
+    await window.soumiSupabase.from('analytics').upsert({
+      visitor_id: visitorId,
+      session_id: sessionId,
+      ip_address: existing?.ip_address || await getPublicIP(),
+      city: existing?.city || await getApproxCity(),
+      page_url: window.location.href,
+      time_spent_seconds: Math.max(Number(existing?.time_spent_seconds) || 0, Math.round((Date.now() - soumiPageStartedAt) / 1000)),
+      last_seen: new Date().toISOString(),
+      onesignal_user_id: existing?.onesignal_user_id || await getOneSignalPlayerId(),
+      activity_history: history.concat(event).slice(-100)
+    }, { onConflict: 'visitor_id' });
+  }catch(err){
+    console.warn('Activity tracking failed:', err);
+  }
+}
+
+async function registerPushSubscriber(playerId){
+  if(!playerId || !window.soumiSupabase) return;
+  const ip = await getPublicIP();
+  const city = await getApproxCity();
+  const visitorId = getSoumiVisitorId();
+
+  const deviceInfo = {
+    ip,
+    city,
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    platform: navigator.platform,
+    at: new Date().toISOString()
+  };
+
+  await window.soumiSupabase.from('subscribers').upsert({
+    onesignal_player_id: playerId,
+    visitor_id: visitorId,
+    city,
+    device_info: deviceInfo
+  }, { onConflict: 'onesignal_player_id' });
+
+  await window.soumiSupabase.from('analytics').upsert({
+    visitor_id: visitorId,
+    session_id: getSoumiSessionId(),
+    ip_address: ip,
+    city,
+    page_url: window.location.href,
+    last_seen: new Date().toISOString(),
+    onesignal_user_id: playerId
+  }, { onConflict: 'visitor_id' });
+
+  await trackActivityEvent('push_subscribe', { onesignal_player_id: playerId });
+}
+
+async function activatePushNotifications(){
+  const warning = $('pushPromptWarning');
+  const btn = $('activatePushBtn');
+  const c = pushCopy();
+
+  if(btn) btn.disabled = true;
+  if(warning){
+    warning.hidden = true;
+    warning.textContent = '';
+  }
+
+  try{
+    let granted = Notification.permission === 'granted';
+
+    if(window.OneSignalDeferred){
+      await window.OneSignalDeferred.push(async function(OneSignal){
+        if(Notification.permission !== 'granted'){
+          if(OneSignal?.Notifications?.requestPermission){
+            granted = await OneSignal.Notifications.requestPermission();
+          }else if('Notification' in window){
+            granted = (await Notification.requestPermission()) === 'granted';
+          }
+        }
+      });
+    }else if('Notification' in window){
+      granted = (await Notification.requestPermission()) === 'granted';
+    }
+
+    if(Notification.permission === 'granted' || granted === true){
+      const playerId = await getOneSignalPlayerId();
+      await registerPushSubscriber(playerId);
+      localStorage.setItem('soumi_push_enabled', '1');
+      closePushPrompt();
+    }else{
+      if(warning){
+        warning.textContent = c.denied;
+        warning.hidden = false;
+      }
+      await trackActivityEvent('push_denied');
+    }
+  }catch(err){
+    console.warn('Push activation failed:', err);
+    if(warning){
+      warning.textContent = c.denied;
+      warning.hidden = false;
+    }
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+}
+
+function initPushPrompt(){
+  syncPushPromptLanguage();
+
+  $('activatePushBtn')?.addEventListener('click', activatePushNotifications);
+  $('continuePushBtn')?.addEventListener('click', () => {
+    trackActivityEvent('push_continue_browsing');
+    closePushPrompt();
+  });
+  document.querySelectorAll('[data-close-push-modal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      trackActivityEvent('push_prompt_closed');
+      closePushPrompt();
+    });
+  });
+
+  setTimeout(async () => {
+    if(sessionStorage.getItem('soumi_push_prompt_seen') === '1') return;
+    if(localStorage.getItem('soumi_push_enabled') === '1') return;
+    if(!('Notification' in window)) return;
+    if(Notification.permission === 'granted'){
+      const playerId = await getOneSignalPlayerId();
+      if(playerId) await registerPushSubscriber(playerId);
+      return;
+    }
+    showPushPrompt();
+  }, 900);
+}
+
+
+async function init(){
+  try{ await loadProducts(); }catch(err){ console.error(err); products = []; }
   selectedProduct = products[0] || null;
   modalProduct = products[0] || null;
   applyTranslations();
@@ -769,11 +869,6 @@ async function init(){
   initWhatsApp();
   initDesktopGalleryArrows();
   initCursorGlow();
-  ensureSessionId();
-  trackEvent('visit');
-  initNotificationPrompt();
-  initActivityTracking();
-  setTimeout(refreshOneSignalUserId, 2500);
   $('langSwitch')?.addEventListener('click', () => {
     currentLang = currentLang === 'ar' ? 'fr' : 'ar';
     applyTranslations();
@@ -781,11 +876,18 @@ async function init(){
   });
   document.addEventListener('keydown', (e)=>{
     if(e.key === 'Escape'){
-      closeModal('productModal');
-      closeModal('orderModal');
+      closeModalWithScrollUnlock($('productModal'));
+      closeModalWithScrollUnlock($('orderModal'));
+      closeModalWithScrollUnlock($('reviewModal'));
       $('waChat')?.classList.remove('show');
     }
   });
+
+  // --- NEW INIT CALLS ---
+  loadPublishedReviews();
+  trackPageView();
+  initModalScrollFix();
+  initPushPrompt();
 }
 
 document.addEventListener('DOMContentLoaded', init);

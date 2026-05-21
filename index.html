@@ -18,6 +18,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
+
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: "b0ca17c7-75cb-49bb-bfbd-936677a81519",
+        notifyButton: { enable: false },
+        serviceWorkerPath: "OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/" }
+      });
+    });
+  </script>
+
 </head>
 <body>
   <div class="cursor-glow" aria-hidden="true"></div>
@@ -120,8 +134,11 @@
           <article class="review-card glass reveal"><div class="stars">★★★★★</div><h3>Nadia - Tanger</h3><audio controls preload="metadata" src="assets/audio/review-4.ogg"></audio></article>
         </div>
 
-        <div class="review-cta-wrap reveal">
-          <button class="btn btn-primary btn-glow pulse" id="openReviewModalBtn" type="button">Laissez un avis</button>
+        <!-- NEW DYNAMIC REVIEWS CONTAINER -->
+        <div id="supabaseReviews" class="reviews-grid" style="margin-top: 20px;"></div>
+
+        <div class="review-action reveal" style="margin-top: 24px; text-align: center;">
+          <button id="openReviewModalBtn" class="btn btn-primary btn-glow pulse" type="button">Laissez un avis</button>
         </div>
       </div>
     </section>
@@ -173,23 +190,6 @@
 
   <button class="mobile-sticky-cta btn btn-primary pulse js-open-order" type="button" data-i18n="stickyCta">Commander maintenant</button>
 
-
-  <div class="notification-modal" id="notificationModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
-    <div class="notification-mask" data-close="notification"></div>
-    <article class="notification-card glass">
-      <div class="notification-icon">🔔</div>
-      <span class="eyebrow" data-i18n="notifEyebrow">NOTIFICATIONS PRIVÉES</span>
-      <h2 id="notificationTitle" data-i18n="notifTitle">Activez les notifications Soumi Crochet</h2>
-      <p data-i18n="notifText">Recevez les nouveautés, confirmations et offres limitées directement sur votre appareil.</p>
-      <p class="notification-warning" id="notificationWarning" hidden data-i18n="notifWarning">Certaines fonctionnalités peuvent être limitées si les notifications restent désactivées.</p>
-      <div class="notification-actions">
-        <button class="btn btn-primary btn-glow pulse" id="activateNotificationsBtn" type="button" data-i18n="notifActivate">Activer les notifications</button>
-        <button class="btn btn-secondary glass" id="continueBrowsingBtn" type="button" data-i18n="notifContinue">Continuer la navigation</button>
-      </div>
-    </article>
-  </div>
-  <!-- /notification-permission -->
-
   <div class="modal" id="productModal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal-mask" data-close="product"></div>
     <div class="modal-card glass product-modal-card">
@@ -208,16 +208,12 @@
         <h2 class="type-target" data-i18n="orderTitle">Finaliser votre commande</h2>
       </div>
 
-      <form id="orderForm" autocomplete="on">
-        <input type="hidden" name="_subject" value="New Soumi Crochet Order" />
-        <input type="hidden" name="_next" value="thankyou.html" />
+      <!-- USING THE NEW HANDLEORDERSUBMIT IN JS INSTEAD OF ACTION -->
+      <form id="orderForm">
         <input type="hidden" name="selected_model_name" id="selectedModelName" />
         <input type="hidden" name="selected_product_image" id="selectedProductImage" />
         <input type="hidden" name="selected_product_price" id="selectedProductPrice" />
-        <input type="hidden" name="product_id" id="selectedProductId" />
-        <input type="hidden" name="onesignal_user_id" id="oneSignalUserId" />
-        <input type="hidden" name="session_id" id="sessionId" />
-        <input type="hidden" name="source_page" id="sourcePage" />
+        <input type="hidden" name="selected_product_id" id="selectedProductId" />
 
         <div class="order-progress" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
 
@@ -264,34 +260,52 @@
 
 
   <div class="modal" id="reviewModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
-    <div class="modal-mask" data-close="review"></div>
-    <div class="modal-card glass review-modal-card">
-      <button class="modal-close" id="closeReviewModal" type="button" aria-label="Close">×</button>
-      <div class="section-head compact">
-        <span class="eyebrow">CUSTOMER REVIEW</span>
+    <div class="modal-mask" data-close-review-modal></div>
+    <div class="modal-card glass">
+      <button class="modal-close" type="button" data-close-review-modal aria-label="Close">×</button>
+      <div class="modal-info" style="padding:30px;max-width:720px;margin:auto;">
+        <span class="eyebrow">AVIS CLIENTES</span>
         <h2 id="reviewModalTitle">Laissez un avis</h2>
         <p>Partagez votre expérience avec Soumi Crochet.</p>
+        <form id="reviewForm" class="order-form">
+          <label class="field"><span>Nom</span><input type="text" id="reviewerName" name="reviewer_name" required placeholder="Votre nom" /></label>
+          <label class="field"><span>Ville</span><input type="text" id="reviewCity" name="city" required placeholder="Votre ville" /></label>
+          <label class="field"><span>Téléphone</span><input type="tel" id="reviewPhone" name="phone" placeholder="06 00 00 00 00" /></label>
+          <label class="field"><span>Note</span>
+            <select id="reviewRating" name="rating" required style="width:100%;border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff;color:var(--text);">
+              <option value="5">⭐⭐⭐⭐⭐</option>
+              <option value="4">⭐⭐⭐⭐</option>
+              <option value="3">⭐⭐⭐</option>
+              <option value="2">⭐⭐</option>
+              <option value="1">⭐</option>
+            </select>
+          </label>
+          <label class="field"><span>Votre avis</span><textarea id="reviewText" name="review_text" required rows="4" placeholder="Écrivez votre avis ici..." style="width:100%;border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff;color:var(--text);resize:vertical;"></textarea></label>
+          <button class="btn btn-primary btn-glow pulse" type="submit">Envoyer l’avis</button>
+          <p id="reviewStatus" aria-live="polite"></p>
+        </form>
       </div>
-      <form id="reviewForm" class="review-form" autocomplete="on">
-        <label class="field"><span>Nom</span><input id="reviewerName" name="reviewer_name" type="text" required autocomplete="name" /></label>
-        <label class="field"><span>Ville</span><input id="reviewerCity" name="city" type="text" required autocomplete="address-level2" /></label>
-        <label class="field"><span>Téléphone</span><input id="reviewerPhone" name="phone" type="tel" required autocomplete="tel" placeholder="06 00 00 00 00" /></label>
-        <fieldset class="rating-field" aria-label="Rating">
-          <legend>Note</legend>
-          <div class="rating-stars" id="ratingStars">
-            <input type="radio" id="rating5" name="rating" value="5" required checked><label for="rating5">★</label>
-            <input type="radio" id="rating4" name="rating" value="4"><label for="rating4">★</label>
-            <input type="radio" id="rating3" name="rating" value="3"><label for="rating3">★</label>
-            <input type="radio" id="rating2" name="rating" value="2"><label for="rating2">★</label>
-            <input type="radio" id="rating1" name="rating" value="1"><label for="rating1">★</label>
-          </div>
-        </fieldset>
-        <label class="field"><span>Message</span><textarea id="reviewText" name="review_text" rows="4" required></textarea></label>
-        <p class="form-note" id="reviewFormMessage"></p>
-        <button class="btn btn-primary btn-glow full" type="submit">Envoyer l’avis</button>
-      </form>
     </div>
   </div>
+
+
+  <div class="modal push-permission-modal" id="pushPromptModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-mask" data-close-push-modal></div>
+    <div class="modal-card glass push-card">
+      <button class="modal-close" type="button" data-close-push-modal aria-label="Close">×</button>
+      <div class="modal-info">
+        <span class="eyebrow" id="pushPromptEyebrow">SOUMI NOTIFICATIONS</span>
+        <h2 id="pushPromptTitle">🔔 Activez les notifications Soumi Crochet</h2>
+        <p id="pushPromptText">Recevez les nouveautés, offres limitées et le suivi de votre commande directement sur votre téléphone.</p>
+        <p class="push-warning" id="pushPromptWarning" hidden></p>
+        <div class="push-actions">
+          <button class="btn btn-primary btn-glow pulse" type="button" id="activatePushBtn">Activer les notifications</button>
+          <button class="btn btn-secondary glass" type="button" id="continuePushBtn">Continuer sans notifications</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <div class="whatsapp-widget" id="whatsappWidget">
     <div class="wa-chat glass" id="waChat" aria-hidden="true">
@@ -308,18 +322,6 @@
     </button>
   </div>
 
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-  <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "6565128a-14fe-46c3-be87-745cfd90b264",
-        safari_web_id: "web.onesignal.auto.0dd8fdab-49d8-437b-ac06-36c9d15991be",
-        notifyButton: { enable: true },
-        allowLocalhostAsSecureOrigin: true
-      });
-    });
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/app.js"></script>
 </body>
