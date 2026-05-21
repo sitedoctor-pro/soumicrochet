@@ -77,16 +77,24 @@ function getSelectedProductImageUrl(product, imageIndex = 0) {
 
 async function getOneSignalUserIdSafe() {
   try {
+    if (typeof getOneSignalPlayerId === 'function') {
+      return await getOneSignalPlayerId();
+    }
+
     if (!window.OneSignalDeferred) return null;
-    let playerId = null;
-    await window.OneSignalDeferred.push(async function (OneSignal) {
-      if (OneSignal.User?.PushSubscription?.id) {
-        playerId = OneSignal.User.PushSubscription.id;
-      } else if (OneSignal.User?.onesignalId) {
-        playerId = OneSignal.User.onesignalId;
-      }
+    return await new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        resolve(value || null);
+      };
+      const timer = setTimeout(() => finish(null), 3500);
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        clearTimeout(timer);
+        finish(OneSignal.User?.PushSubscription?.id || OneSignal.User?.onesignalId || null);
+      });
     });
-    return playerId;
   } catch (_) { return null; }
 }
 
@@ -447,9 +455,9 @@ async function handleOrderSubmit(event) {
   };
 
   try {
-    const { data: insertedOrder, error } = await window.soumiSupabase.from('orders').insert(orderPayload).select('id, customer_name, phone, city, address, product_name, price, image_url').single();
+    const { error } = await window.soumiSupabase.from('orders').insert(orderPayload);
     if (error) throw error;
-    const savedOrder = insertedOrder ? { ...orderPayload, ...insertedOrder } : orderPayload;
+    const savedOrder = { ...orderPayload, id: `local_${Date.now()}` };
     await sendAdminNewOrderPush(savedOrder);
     sessionStorage.setItem('soumi_last_order', JSON.stringify(savedOrder));
     await trackPageView(true);
@@ -640,7 +648,9 @@ if(reviewForm) {
         is_published: false,
         status: 'pending'
       };
-      await window.soumiSupabase.from('reviews').insert(payload);
+      const { error } = await window.soumiSupabase.from('reviews').insert(payload);
+      if (error) throw error;
+      await sendAdminNewReviewPush(payload);
       if(status) status.textContent = "Merci! Votre avis a été envoyé.";
       reviewForm.reset();
       setTimeout(() => closeModalWithScrollUnlock(document.getElementById('reviewModal')), 2000);
@@ -699,17 +709,41 @@ async function wait(ms){
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function withOneSignal(callback){
-  if(!window.OneSignalDeferred) return null;
+async function withOneSignal(callback, timeoutMs = 9000){
+  if(!window.OneSignalDeferred){
+    console.warn('OneSignalDeferred is not available. Check SDK script and domain setup.');
+    return null;
+  }
+
   return await new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => {
+      if(settled) return;
+      settled = true;
+      resolve(value);
+    };
+
+    const timer = setTimeout(() => {
+      console.warn('OneSignal SDK timeout. Check HTTPS/domain/worker file.');
+      finish(null);
+    }, timeoutMs);
+
     try{
       window.OneSignalDeferred.push(async function(OneSignal){
-        try{ resolve(await callback(OneSignal)); }
-        catch(err){ console.warn('OneSignal callback failed:', err); resolve(null); }
+        try{
+          const value = await callback(OneSignal);
+          clearTimeout(timer);
+          finish(value);
+        }catch(err){
+          console.warn('OneSignal callback failed:', err);
+          clearTimeout(timer);
+          finish(null);
+        }
       });
     }catch(err){
       console.warn('OneSignal unavailable:', err);
-      resolve(null);
+      clearTimeout(timer);
+      finish(null);
     }
   });
 }
@@ -717,51 +751,45 @@ async function withOneSignal(callback){
 async function getOneSignalPlayerId(){
   return await withOneSignal(async (OneSignal) => {
     return OneSignal?.User?.PushSubscription?.id || OneSignal?.User?.onesignalId || null;
-  });
+  }, 6500);
 }
 
-async function waitForOneSignalPlayerId(maxTries = 18){
+async function waitForOneSignalPlayerId(maxTries = 12){
   for(let i = 0; i < maxTries; i += 1){
     const id = await getOneSignalPlayerId();
     if(id) return id;
-    await wait(450);
+    await wait(500);
   }
   return null;
 }
 
 async function ensureOneSignalPushOptIn(){
-  return await withOneSignal(async (OneSignal) => {
+  const result = await withOneSignal(async (OneSignal) => {
     if(!OneSignal?.Notifications?.isPushSupported || !OneSignal.Notifications.isPushSupported()){
-      return { granted:false, reason:'unsupported' };
+      return { granted:false, playerId:null, reason:'unsupported' };
     }
 
     let granted = Notification.permission === 'granted' || OneSignal.Notifications.permission === true;
 
-    if(!granted){
+    if(!granted && OneSignal.Notifications?.requestPermission){
       try{
-        granted = await OneSignal.Notifications.requestPermission();
+        const requestResult = await OneSignal.Notifications.requestPermission();
+        granted = requestResult === true || Notification.permission === 'granted' || OneSignal.Notifications.permission === true;
       }catch(err){
-        console.warn('Native permission request failed:', err);
+        console.warn('OneSignal permission request failed:', err);
       }
     }
 
-    if(!granted && OneSignal?.Slidedown?.promptPush){
-      try{
-        await OneSignal.Slidedown.promptPush({ force: true });
-        await wait(900);
-        granted = Notification.permission === 'granted' || OneSignal.Notifications.permission === true;
-      }catch(err){
-        console.warn('OneSignal slidedown failed:', err);
-      }
-    }
-
-    if(granted && OneSignal?.User?.PushSubscription?.optIn){
+    if(granted && OneSignal.User?.PushSubscription?.optIn){
       try{ await OneSignal.User.PushSubscription.optIn(); }catch(err){ console.warn('OneSignal optIn failed:', err); }
     }
 
-    const playerId = await waitForOneSignalPlayerId();
-    return { granted: Boolean(granted), playerId };
-  }) || { granted:false, playerId:null };
+    await wait(700);
+    const playerId = OneSignal.User?.PushSubscription?.id || OneSignal.User?.onesignalId || await waitForOneSignalPlayerId(8);
+    return { granted: Boolean(granted), playerId, reason: playerId ? 'ok' : 'no_subscription_id' };
+  }, 15000);
+
+  return result || { granted:false, playerId:null, reason:'sdk_timeout' };
 }
 
 async function trackActivityEvent(type, meta = {}){
@@ -880,6 +908,39 @@ async function sendAdminNewOrderPush(orderPayload){
   }
 }
 
+
+async function sendAdminNewReviewPush(reviewPayload){
+  try{
+    const title = `⭐ Avis جديد من ${reviewPayload.reviewer_name || 'Cliente'}`;
+    const message = `${reviewPayload.city || '-'}: ${String(reviewPayload.review_text || '').slice(0, 130)}`;
+    const adminUrl = 'https://soumicrochet.store/admin/#reviews';
+    const payload = {
+      app_id: ADMIN_ONESIGNAL_APP_ID,
+      included_segments: ['All'],
+      headings: { en: title, fr: title, ar: title },
+      contents: { en: message, fr: message, ar: message },
+      url: adminUrl,
+      web_url: adminUrl,
+      web_buttons: [{ id:'approve-review', text:'قبول الرأي', url: adminUrl }],
+      buttons: [{ id:'approve-review', text:'قبول الرأي' }],
+      chrome_web_icon: 'https://soumicrochet.store/assets/img/logo.png',
+      firefox_icon: 'https://soumicrochet.store/assets/img/logo.png',
+      data: { type: 'new_review', review_name: reviewPayload.reviewer_name || '', review_city: reviewPayload.city || '' }
+    };
+
+    await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+  }catch(err){
+    console.warn('Admin review push failed:', err);
+  }
+}
+
 async function activatePushNotifications(){
   const warning = $('pushPromptWarning');
   const btn = $('activatePushBtn');
@@ -909,10 +970,15 @@ async function activatePushNotifications(){
     }
 
     if(warning){
-      warning.textContent = c.denied + ' ' + (currentLang === 'ar' ? 'إلى بان ليك طلب المتصفح، ضروري تضغط Allow.' : 'Si le navigateur affiche une demande, cliquez sur Allow.');
+      const reasonMsg = result.reason === 'unsupported'
+        ? (currentLang === 'ar' ? 'المتصفح ديالك ما كيدعمش Web Push.' : 'Votre navigateur ne supporte pas Web Push.')
+        : result.reason === 'sdk_timeout'
+          ? (currentLang === 'ar' ? 'تأكد أن الموقع منشور بـ HTTPS وأن OneSignalSDKWorker.js موجود فالروت.' : 'Vérifiez HTTPS et le fichier OneSignalSDKWorker.js à la racine.')
+          : (currentLang === 'ar' ? 'إلى بان ليك طلب المتصفح، ضروري تضغط Allow.' : 'Si le navigateur affiche une demande, cliquez sur Allow.');
+      warning.textContent = c.denied + ' ' + reasonMsg;
       warning.hidden = false;
     }
-    await trackActivityEvent('push_denied');
+    await trackActivityEvent('push_denied', { reason: result.reason || 'unknown' });
   }catch(err){
     console.warn('Push activation failed:', err);
     if(warning){
