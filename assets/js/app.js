@@ -86,18 +86,47 @@ async function waitForOneSignalReady(timeoutMs = 12000) {
 
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-async function getOneSignalUserIdSafe() {
+async function getOneSignalUserIdSafe(maxWaitMs = 3500) {
   try {
     const OneSignal = await waitForOneSignalReady(7000);
-    for (let i = 0; i < 16; i += 1) {
-      const subscriptionId = OneSignal.User?.PushSubscription?.id || null;
+    const started = Date.now();
+
+    while (Date.now() - started < maxWaitMs) {
+      const subscriptionId =
+        OneSignal.User?.PushSubscription?.id ||
+        OneSignal.User?.PushSubscription?.token ||
+        localStorage.getItem('soumi_push_subscription_id') ||
+        null;
+
       if (subscriptionId) return subscriptionId;
-      await sleep(350);
+      await sleep(250);
     }
+
     return null;
   } catch (_) {
-    return null;
+    return localStorage.getItem('soumi_push_subscription_id') || null;
   }
+}
+
+async function waitAndSaveSoumiSubscriptionInBackground(maxWaitMs = 18000) {
+  try {
+    const OneSignal = await waitForOneSignalReady(7000);
+    const started = Date.now();
+
+    while (Date.now() - started < maxWaitMs) {
+      const subscriptionId = OneSignal.User?.PushSubscription?.id || OneSignal.User?.PushSubscription?.token || null;
+      if (subscriptionId) {
+        await saveSoumiSubscriber(subscriptionId);
+        localStorage.setItem('soumi_push_enabled', '1');
+        localStorage.setItem('soumi_push_subscription_id', subscriptionId);
+        return subscriptionId;
+      }
+      await sleep(700);
+    }
+  } catch (error) {
+    console.warn('Background subscription save failed:', error);
+  }
+  return null;
 }
 
 function setPushWarning(message) {
@@ -149,45 +178,75 @@ async function saveSoumiSubscriber(subscriptionId) {
 
 async function activateSoumiNotifications(button = null) {
   const originalText = button?.textContent || '';
+
   try {
     if (!('Notification' in window)) {
       setPushWarning('هاد المتصفح ما كيدعمش الإشعارات.');
       return;
     }
+
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
       setPushWarning('خاص الموقع يكون HTTPS باش الإشعارات يخدمو.');
       return;
     }
+
     if (button) {
       button.disabled = true;
-      button.textContent = currentLang === 'ar' ? 'جار التفعيل...' : 'Activation...';
+      button.textContent = currentLang === 'ar' ? 'كيبان طلب الإذن...' : 'Autorisation...';
     }
 
-    const OneSignal = await waitForOneSignalReady();
-    await OneSignal.Notifications.requestPermission();
-    await sleep(900);
+    const OneSignal = await waitForOneSignalReady(10000);
+
+    try {
+      if (OneSignal.User?.PushSubscription?.optIn) {
+        await OneSignal.User.PushSubscription.optIn();
+      }
+    } catch (_) {}
 
     if (Notification.permission !== 'granted') {
-      setPushWarning(currentLang === 'ar' ? 'ما تفعلاتش الإشعارات. ضغط Autoriser إلا بان ليك فوق.' : 'Notifications non activées. Cliquez sur Autoriser si le navigateur le demande.');
+      await OneSignal.Notifications.requestPermission();
+    }
+
+    await sleep(350);
+
+    if (Notification.permission !== 'granted') {
+      setPushWarning(currentLang === 'ar'
+        ? 'ما تفعلاتش الإشعارات. إلا بان prompt ديال المتصفح فوق، ضغط Autoriser.'
+        : 'Notifications non activées. Si le navigateur affiche une demande, cliquez sur Autoriser.'
+      );
       return;
     }
 
-    try { await OneSignal.User.PushSubscription.optIn(); } catch (_) {}
-    const subscriptionId = await getOneSignalUserIdSafe();
+    if (button) button.textContent = currentLang === 'ar' ? 'جاري تسجيل الجهاز...' : 'Enregistrement...';
 
-    if (!subscriptionId) {
-      setPushWarning(currentLang === 'ar' ? 'الإذن تفعل ولكن Subscription ID ما خرجش. تأكد من OneSignalSDKWorker.js فالروت.' : 'Permission granted but subscription ID missing. Check OneSignalSDKWorker.js at root.');
+    let subscriptionId = await getOneSignalUserIdSafe(3500);
+
+    if (subscriptionId) {
+      await saveSoumiSubscriber(subscriptionId);
+      localStorage.setItem('soumi_push_enabled', '1');
+      localStorage.setItem('soumi_push_subscription_id', subscriptionId);
+      closePushPrompt();
+      alert(currentLang === 'ar' ? '✅ تم تفعيل الإشعارات بنجاح' : '✅ Notifications activées');
       return;
     }
 
-    await saveSoumiSubscriber(subscriptionId);
+    // OneSignal sometimes creates the subscription a few seconds after permission.
+    // Do not keep the UI stuck; continue saving in the background.
     localStorage.setItem('soumi_push_enabled', '1');
-    localStorage.setItem('soumi_push_subscription_id', subscriptionId);
-    closePushPrompt();
-    alert(currentLang === 'ar' ? '✅ تم تفعيل الإشعارات بنجاح' : '✅ Notifications activées');
+    setPushWarning(currentLang === 'ar'
+      ? 'الإذن تفعل. كنسجلو الجهاز فالخلفية، جرب دير Refresh بعد لحظات إلا ما وصلش الإشعار.'
+      : 'Permission activée. Nous enregistrons l’appareil en arrière-plan.'
+    );
+
+    waitAndSaveSoumiSubscriptionInBackground().then((id) => {
+      if (id) closePushPrompt();
+    });
   } catch (error) {
     console.error('Push activation failed:', error);
-    setPushWarning(currentLang === 'ar' ? 'وقع مشكل فالتفعيل. تأكد من إعداد OneSignal والدومين والـ Worker.' : 'Activation failed. Check OneSignal domain and worker path.');
+    setPushWarning(currentLang === 'ar'
+      ? 'وقع مشكل فالتفعيل. تأكد من إعداد OneSignal والدومين والـ Worker.'
+      : 'Activation failed. Check OneSignal domain and worker path.'
+    );
   } finally {
     if (button) {
       button.disabled = false;
@@ -207,16 +266,34 @@ function initSoumiPushPrompt() {
 }
 
 async function sendPushViaEdge(body) {
-  if (!window.soumiSupabase?.functions) return { skipped: true };
+  const functionUrl = `${SUPABASE_URL}/functions/v1/send-push`;
+
   try {
-    const { data, error } = await window.soumiSupabase.functions.invoke('send-push', { body });
-    if (error) throw error;
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(body),
+      keepalive: false
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || data?.error) {
+      console.warn('send-push failed:', response.status, data);
+      return { error: data?.error || `HTTP ${response.status}`, details: data };
+    }
+
     return data;
   } catch (error) {
-    console.warn('send-push failed:', error);
+    console.warn('send-push network failed:', error);
     return { error: String(error?.message || error) };
   }
 }
+
 
 
 const translations = {
@@ -579,7 +656,7 @@ async function handleOrderSubmit(event) {
     const { error } = await window.soumiSupabase.from('orders').insert(orderPayload);
     if (error) throw error;
 
-    await sendPushViaEdge({
+    const adminOrderPush = sendPushViaEdge({
       targetApp: 'admin',
       title: '👜 طلب جديد من Soumi Crochet',
       message: `${customerName} - ${city} - ${phone}`,
@@ -594,6 +671,8 @@ async function handleOrderSubmit(event) {
         product_name: productNameTxt
       }
     });
+
+    await Promise.race([adminOrderPush, sleep(2200)]);
 
     sessionStorage.setItem('soumi_last_order', JSON.stringify(orderPayload));
     await trackPageView(true);
@@ -743,27 +822,61 @@ async function loadPublishedReviews() {
 
 // --- NEW ANALYTICS ---
 let soumiPageStartedAt = Date.now();
+let soumiPageViewSavedOnce = false;
+
 async function trackPageView(finalUpdate = false) {
   if (!window.soumiSupabase) return;
+
   const visitorId = getSoumiVisitorId();
   const sessionId = getSoumiSessionId();
   const seconds = Math.max(0, Math.round((Date.now() - soumiPageStartedAt) / 1000));
+
   try {
     const [{ data: existing }, ipAddress, approxCity] = await Promise.all([
-      window.soumiSupabase.from('analytics').select('activity_history, time_spent_seconds, ip_address, city').eq('visitor_id', visitorId).maybeSingle(),
-      getPublicIP(), getApproxCity()
+      window.soumiSupabase
+        .from('analytics')
+        .select('activity_history, time_spent_seconds, ip_address, city')
+        .eq('visitor_id', visitorId)
+        .maybeSingle(),
+      getPublicIP(),
+      getApproxCity()
     ]);
+
     const oldHistory = Array.isArray(existing?.activity_history) ? existing.activity_history : [];
-    const pageViewEvent = { type: 'page_view', page_url: window.location.href, at: new Date().toISOString() };
-    const nextHistory = oldHistory.concat(pageViewEvent).slice(-100);
-    await window.soumiSupabase.from('analytics').upsert({
-      visitor_id: visitorId, session_id: sessionId, ip_address: existing?.ip_address || ipAddress, city: existing?.city || approxCity,
-      page_url: window.location.href, time_spent_seconds: Math.max(Number(existing?.time_spent_seconds) || 0, seconds),
-      last_seen: new Date().toISOString(), activity_history: nextHistory
-    }, { onConflict: 'visitor_id' });
-  } catch (error) { console.warn('Soumi analytics page_view failed:', error); }
+    let nextHistory = oldHistory;
+
+    // A visitor is one unique analytics row. Every new load is only a page_view event.
+    if (!soumiPageViewSavedOnce) {
+      nextHistory = oldHistory.concat({
+        type: 'page_view',
+        page_url: window.location.href,
+        path: window.location.pathname,
+        title: document.title,
+        at: new Date().toISOString()
+      }).slice(-150);
+      soumiPageViewSavedOnce = true;
+    }
+
+    await window.soumiSupabase
+      .from('analytics')
+      .upsert({
+        visitor_id: visitorId,
+        session_id: sessionId,
+        ip_address: existing?.ip_address || ipAddress,
+        city: existing?.city || approxCity,
+        page_url: window.location.href,
+        time_spent_seconds: Math.max(Number(existing?.time_spent_seconds) || 0, seconds),
+        last_seen: new Date().toISOString(),
+        activity_history: nextHistory
+      }, { onConflict: 'visitor_id' });
+  } catch (error) {
+    console.warn('Soumi analytics page_view failed:', error);
+  }
 }
+
 window.addEventListener('beforeunload', () => { trackPageView(true); });
+// Keep time_spent_seconds fresh while the visitor stays on the page.
+setInterval(() => { trackPageView(true); }, 15000);
 
 // --- REVIEW SUBMIT HANDLER ---
 const reviewForm = document.getElementById('reviewForm');
@@ -787,7 +900,7 @@ if(reviewForm) {
       const { error } = await window.soumiSupabase.from('reviews').insert(payload);
       if (error) throw error;
 
-      await sendPushViaEdge({
+      const adminReviewPush = sendPushViaEdge({
         targetApp: 'admin',
         title: '⭐ رأي جديد فـ Soumi Crochet',
         message: `${payload.reviewer_name} - ${payload.city}: ${payload.review_text}`,
@@ -800,6 +913,7 @@ if(reviewForm) {
           city: payload.city
         }
       });
+      await Promise.race([adminReviewPush, sleep(2200)]);
 
       if(status) status.textContent = "Merci! Votre avis a été envoyé.";
       reviewForm.reset();
