@@ -655,8 +655,24 @@ async function handleOrderSubmit(event) {
   try {
     const { error } = await window.soumiSupabase.from('orders').insert(orderPayload);
     if (error) throw error;
-    // Admin push is handled server-side by Supabase SQL trigger -> send-push.
-    // This avoids relying on the visitor tab and prevents duplicate notifications.
+
+    const adminOrderPush = sendPushViaEdge({
+      targetApp: 'admin',
+      title: '👜 طلب جديد من Soumi Crochet',
+      message: `${customerName} - ${city} - ${phone}`,
+      includedSegments: ['All'],
+      url: 'https://panel.soumicrochet.store/index.html#orders',
+      buttonText: 'فتح الطلبات',
+      data: {
+        type: 'new_order',
+        phone,
+        city,
+        product_id: productId,
+        product_name: productNameTxt
+      }
+    });
+
+    await Promise.race([adminOrderPush, sleep(2200)]);
 
     sessionStorage.setItem('soumi_last_order', JSON.stringify(orderPayload));
     await trackPageView(true);
@@ -883,7 +899,21 @@ if(reviewForm) {
       };
       const { error } = await window.soumiSupabase.from('reviews').insert(payload);
       if (error) throw error;
-      // Admin review push is handled server-side by Supabase SQL trigger -> send-push.
+
+      const adminReviewPush = sendPushViaEdge({
+        targetApp: 'admin',
+        title: '⭐ رأي جديد فـ Soumi Crochet',
+        message: `${payload.reviewer_name} - ${payload.city}: ${payload.review_text}`,
+        includedSegments: ['All'],
+        url: 'https://panel.soumicrochet.store/index.html#reviews',
+        buttonText: 'قبول الرأي',
+        data: {
+          type: 'new_review',
+          reviewer_name: payload.reviewer_name,
+          city: payload.city
+        }
+      });
+      await Promise.race([adminReviewPush, sleep(2200)]);
 
       if(status) status.textContent = "Merci! Votre avis a été envoyé.";
       reviewForm.reset();
