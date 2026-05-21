@@ -76,26 +76,17 @@ function getSelectedProductImageUrl(product, imageIndex = 0) {
 }
 
 async function getOneSignalUserIdSafe() {
-  try {
-    if (typeof getOneSignalPlayerId === 'function') {
-      return await getOneSignalPlayerId();
-    }
+  const cached = localStorage.getItem('soumi_onesignal_player_id');
+  if (cached) return cached;
 
-    if (!window.OneSignalDeferred) return null;
-    return await new Promise((resolve) => {
-      let settled = false;
-      const finish = (value) => {
-        if (settled) return;
-        settled = true;
-        resolve(value || null);
-      };
-      const timer = setTimeout(() => finish(null), 3500);
-      window.OneSignalDeferred.push(async function (OneSignal) {
-        clearTimeout(timer);
-        finish(OneSignal.User?.PushSubscription?.id || OneSignal.User?.onesignalId || null);
-      });
-    });
-  } catch (_) { return null; }
+  try {
+    return await Promise.race([
+      getOneSignalPlayerId(),
+      wait(1800).then(() => null)
+    ]);
+  } catch (_) {
+    return null;
+  }
 }
 
 const translations = {
@@ -458,7 +449,7 @@ async function handleOrderSubmit(event) {
     const { error } = await window.soumiSupabase.from('orders').insert(orderPayload);
     if (error) throw error;
     const savedOrder = { ...orderPayload, id: `local_${Date.now()}` };
-    await sendAdminNewOrderPush(savedOrder);
+    // Admin push is sent by Supabase trigger sql_push_notifications.sql.
     sessionStorage.setItem('soumi_last_order', JSON.stringify(savedOrder));
     await trackPageView(true);
     window.location.href = 'thankyou.html';
@@ -650,7 +641,7 @@ if(reviewForm) {
       };
       const { error } = await window.soumiSupabase.from('reviews').insert(payload);
       if (error) throw error;
-      await sendAdminNewReviewPush(payload);
+      // Admin review push is sent by Supabase trigger sql_push_notifications.sql.
       if(status) status.textContent = "Merci! Votre avis a été envoyé.";
       reviewForm.reset();
       setTimeout(() => closeModalWithScrollUnlock(document.getElementById('reviewModal')), 2000);
@@ -709,87 +700,143 @@ async function wait(ms){
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function withOneSignal(callback, timeoutMs = 9000){
-  if(!window.OneSignalDeferred){
-    console.warn('OneSignalDeferred is not available. Check SDK script and domain setup.');
-    return null;
-  }
+let soumiOneSignalInitPromise = null;
 
-  return await new Promise((resolve) => {
-    let settled = false;
-    const finish = (value) => {
-      if(settled) return;
-      settled = true;
-      resolve(value);
-    };
+async function wait(ms){
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function initWebsiteOneSignal(){
+  if(soumiOneSignalInitPromise) return soumiOneSignalInitPromise;
+
+  soumiOneSignalInitPromise = new Promise((resolve) => {
+    if(!('Notification' in window) || !('serviceWorker' in navigator)){
+      resolve(null);
+      return;
+    }
+
+    if(!window.isSecureContext && !['localhost','127.0.0.1'].includes(location.hostname)){
+      resolve(null);
+      return;
+    }
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
 
     const timer = setTimeout(() => {
-      console.warn('OneSignal SDK timeout. Check HTTPS/domain/worker file.');
-      finish(null);
-    }, timeoutMs);
+      console.warn('OneSignal SDK did not become ready. Check SDK script, domain setup and worker files.');
+      resolve(null);
+    }, 18000);
 
     try{
       window.OneSignalDeferred.push(async function(OneSignal){
         try{
-          const value = await callback(OneSignal);
+          if(!window.__soumiWebsiteOneSignalInitialized){
+            await OneSignal.init({
+              appId: window.SOUOMI_ONESIGNAL_APP_ID || WEBSITE_ONESIGNAL_APP_ID,
+              notifyButton: { enable: false },
+              allowLocalhostAsSecureOrigin: true,
+              serviceWorkerPath: window.SOUOMI_ONESIGNAL_SW_PATH || '/OneSignalSDKWorker.js',
+              serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
+              serviceWorkerParam: { scope: window.SOUOMI_ONESIGNAL_SW_SCOPE || '/' }
+            });
+            window.__soumiWebsiteOneSignalInitialized = true;
+          }
           clearTimeout(timer);
-          finish(value);
+          resolve(OneSignal);
         }catch(err){
-          console.warn('OneSignal callback failed:', err);
+          console.warn('OneSignal init failed:', err);
           clearTimeout(timer);
-          finish(null);
+          resolve(null);
         }
       });
     }catch(err){
-      console.warn('OneSignal unavailable:', err);
+      console.warn('OneSignal queue failed:', err);
       clearTimeout(timer);
-      finish(null);
+      resolve(null);
     }
   });
+
+  return soumiOneSignalInitPromise;
 }
 
 async function getOneSignalPlayerId(){
-  return await withOneSignal(async (OneSignal) => {
-    return OneSignal?.User?.PushSubscription?.id || OneSignal?.User?.onesignalId || null;
-  }, 6500);
+  const OneSignal = await initWebsiteOneSignal();
+  if(!OneSignal) return localStorage.getItem('soumi_onesignal_player_id') || null;
+
+  try{
+    return OneSignal.User?.PushSubscription?.id || OneSignal.User?.onesignalId || localStorage.getItem('soumi_onesignal_player_id') || null;
+  }catch(_){
+    return localStorage.getItem('soumi_onesignal_player_id') || null;
+  }
 }
 
-async function waitForOneSignalPlayerId(maxTries = 12){
+async function waitForOneSignalPlayerId(maxTries = 18){
   for(let i = 0; i < maxTries; i += 1){
     const id = await getOneSignalPlayerId();
     if(id) return id;
-    await wait(500);
+    await wait(650);
   }
   return null;
 }
 
 async function ensureOneSignalPushOptIn(){
-  const result = await withOneSignal(async (OneSignal) => {
-    if(!OneSignal?.Notifications?.isPushSupported || !OneSignal.Notifications.isPushSupported()){
-      return { granted:false, playerId:null, reason:'unsupported' };
+  if(!('Notification' in window)){
+    return { granted:false, playerId:null, reason:'no_notification_api' };
+  }
+
+  if(!('serviceWorker' in navigator)){
+    return { granted:false, playerId:null, reason:'no_service_worker' };
+  }
+
+  if(!window.isSecureContext && !['localhost','127.0.0.1'].includes(location.hostname)){
+    return { granted:false, playerId:null, reason:'not_https' };
+  }
+
+  const OneSignal = await initWebsiteOneSignal();
+  if(!OneSignal){
+    return { granted:false, playerId:null, reason:'sdk_unavailable' };
+  }
+
+  try{
+    let supported = true;
+    if(typeof OneSignal.Notifications?.isPushSupported === 'function'){
+      supported = await OneSignal.Notifications.isPushSupported();
     }
+    if(!supported) return { granted:false, playerId:null, reason:'unsupported' };
+  }catch(_){ }
 
-    let granted = Notification.permission === 'granted' || OneSignal.Notifications.permission === true;
-
-    if(!granted && OneSignal.Notifications?.requestPermission){
-      try{
-        const requestResult = await OneSignal.Notifications.requestPermission();
-        granted = requestResult === true || Notification.permission === 'granted' || OneSignal.Notifications.permission === true;
-      }catch(err){
-        console.warn('OneSignal permission request failed:', err);
+  try{
+    if(Notification.permission !== 'granted'){
+      if(OneSignal.Notifications?.requestPermission){
+        await OneSignal.Notifications.requestPermission();
+      }else{
+        await Notification.requestPermission();
       }
     }
+  }catch(err){
+    console.warn('Notification permission request failed:', err);
+  }
 
-    if(granted && OneSignal.User?.PushSubscription?.optIn){
-      try{ await OneSignal.User.PushSubscription.optIn(); }catch(err){ console.warn('OneSignal optIn failed:', err); }
+  if(Notification.permission !== 'granted'){
+    return { granted:false, playerId:null, reason: Notification.permission === 'denied' ? 'denied' : 'permission_not_granted' };
+  }
+
+  try{
+    await navigator.serviceWorker.register('/OneSignalSDKWorker.js', { scope: '/' });
+  }catch(err){
+    console.warn('Manual service worker registration failed:', err);
+  }
+
+  try{
+    if(OneSignal.User?.PushSubscription?.optIn){
+      await OneSignal.User.PushSubscription.optIn();
     }
+  }catch(err){
+    console.warn('OneSignal optIn failed:', err);
+  }
 
-    await wait(700);
-    const playerId = OneSignal.User?.PushSubscription?.id || OneSignal.User?.onesignalId || await waitForOneSignalPlayerId(8);
-    return { granted: Boolean(granted), playerId, reason: playerId ? 'ok' : 'no_subscription_id' };
-  }, 15000);
-
-  return result || { granted:false, playerId:null, reason:'sdk_timeout' };
+  const playerId = await waitForOneSignalPlayerId(20);
+  return { granted: Boolean(playerId), playerId, reason: playerId ? 'ok' : 'no_subscription_id' };
 }
 
 async function trackActivityEvent(type, meta = {}){
