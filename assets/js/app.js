@@ -6,9 +6,6 @@ const $ = (id) => document.getElementById(id);
 const ASSET_IMG = 'assets/img/';
 const STORE_IMAGE_BASE = 'soumicrochet.store/';
 const WHATSAPP_NUMBER = '212662711995';
-const WEBSITE_ONESIGNAL_APP_ID = 'b0ca17c7-75cb-49bb-bfbd-936677a81519';
-const ADMIN_ONESIGNAL_APP_ID = '7e6b1cf8-6a2f-44ad-ada2-f623c8046d81';
-const ONESIGNAL_REST_API_KEY = 'os_v2_app_mvsrfcqu7zdmhpuhorop3efsmrqpwmgrm4xurl4b3zmllikl4drp4r7vv4ra7gpsey4iivgzaxi6arqs2ige4eaquuy3ajkwg735ioq';
 
 let products = [];
 let currentLang = localStorage.getItem('soumi_lang') || 'fr';
@@ -75,19 +72,152 @@ function getSelectedProductImageUrl(product, imageIndex = 0) {
   return `soumicrochet.store/assets/img/${image}`;
 }
 
-async function getOneSignalUserIdSafe() {
-  const cached = localStorage.getItem('soumi_onesignal_player_id');
-  if (cached) return cached;
+async function waitForOneSignalReady(timeoutMs = 12000) {
+  if (!window.OneSignalDeferred) throw new Error('OneSignal SDK not loaded');
 
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('OneSignal SDK timeout')), timeoutMs);
+    window.OneSignalDeferred.push(async function (OneSignal) {
+      clearTimeout(timer);
+      resolve(OneSignal);
+    });
+  });
+}
+
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+async function getOneSignalUserIdSafe() {
   try {
-    return await Promise.race([
-      getOneSignalPlayerId(),
-      wait(1800).then(() => null)
-    ]);
+    const OneSignal = await waitForOneSignalReady(7000);
+    for (let i = 0; i < 16; i += 1) {
+      const subscriptionId = OneSignal.User?.PushSubscription?.id || null;
+      if (subscriptionId) return subscriptionId;
+      await sleep(350);
+    }
+    return null;
   } catch (_) {
     return null;
   }
 }
+
+function setPushWarning(message) {
+  const box = $('pushWarning');
+  if (box) {
+    box.textContent = message;
+    box.style.display = 'block';
+  }
+}
+
+function closePushPrompt() {
+  const modal = $('pushPromptModal');
+  if (!modal) return;
+  modal.classList.remove('show', 'active');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('no-scroll', 'modal-open');
+}
+
+function showPushPrompt() {
+  const modal = $('pushPromptModal');
+  if (!modal) return;
+  if (localStorage.getItem('soumi_push_enabled') === '1') return;
+  if (localStorage.getItem('soumi_push_prompt_closed') === '1') return;
+  if ('Notification' in window && Notification.permission === 'granted') return;
+  modal.classList.add('show', 'active');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('no-scroll');
+}
+
+async function saveSoumiSubscriber(subscriptionId) {
+  if (!subscriptionId || !window.soumiSupabase) return;
+  const visitorId = getSoumiVisitorId();
+  await window.soumiSupabase
+    .from('subscribers')
+    .upsert({
+      onesignal_player_id: subscriptionId,
+      visitor_id: visitorId,
+      city: localStorage.getItem('soumi_city') || null,
+      device_info: {
+        app: 'website',
+        domain: location.hostname,
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        subscribed_at: new Date().toISOString()
+      }
+    }, { onConflict: 'onesignal_player_id' });
+}
+
+async function activateSoumiNotifications(button = null) {
+  const originalText = button?.textContent || '';
+  try {
+    if (!('Notification' in window)) {
+      setPushWarning('هاد المتصفح ما كيدعمش الإشعارات.');
+      return;
+    }
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      setPushWarning('خاص الموقع يكون HTTPS باش الإشعارات يخدمو.');
+      return;
+    }
+    if (button) {
+      button.disabled = true;
+      button.textContent = currentLang === 'ar' ? 'جار التفعيل...' : 'Activation...';
+    }
+
+    const OneSignal = await waitForOneSignalReady();
+    await OneSignal.Notifications.requestPermission();
+    await sleep(900);
+
+    if (Notification.permission !== 'granted') {
+      setPushWarning(currentLang === 'ar' ? 'ما تفعلاتش الإشعارات. ضغط Autoriser إلا بان ليك فوق.' : 'Notifications non activées. Cliquez sur Autoriser si le navigateur le demande.');
+      return;
+    }
+
+    try { await OneSignal.User.PushSubscription.optIn(); } catch (_) {}
+    const subscriptionId = await getOneSignalUserIdSafe();
+
+    if (!subscriptionId) {
+      setPushWarning(currentLang === 'ar' ? 'الإذن تفعل ولكن Subscription ID ما خرجش. تأكد من OneSignalSDKWorker.js فالروت.' : 'Permission granted but subscription ID missing. Check OneSignalSDKWorker.js at root.');
+      return;
+    }
+
+    await saveSoumiSubscriber(subscriptionId);
+    localStorage.setItem('soumi_push_enabled', '1');
+    localStorage.setItem('soumi_push_subscription_id', subscriptionId);
+    closePushPrompt();
+    alert(currentLang === 'ar' ? '✅ تم تفعيل الإشعارات بنجاح' : '✅ Notifications activées');
+  } catch (error) {
+    console.error('Push activation failed:', error);
+    setPushWarning(currentLang === 'ar' ? 'وقع مشكل فالتفعيل. تأكد من إعداد OneSignal والدومين والـ Worker.' : 'Activation failed. Check OneSignal domain and worker path.');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalText || (currentLang === 'ar' ? 'تفعيل الإشعارات' : 'Activer les notifications');
+    }
+  }
+}
+
+function initSoumiPushPrompt() {
+  const activateBtn = $('activatePushBtn') || document.querySelector('[data-activate-push]');
+  activateBtn?.addEventListener('click', () => activateSoumiNotifications(activateBtn));
+  document.querySelectorAll('[data-close-push-prompt]').forEach(btn => btn.addEventListener('click', () => {
+    localStorage.setItem('soumi_push_prompt_closed', '1');
+    closePushPrompt();
+  }));
+  setTimeout(showPushPrompt, 1500);
+}
+
+async function sendPushViaEdge(body) {
+  if (!window.soumiSupabase?.functions) return { skipped: true };
+  try {
+    const { data, error } = await window.soumiSupabase.functions.invoke('send-push', { body });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.warn('send-push failed:', error);
+    return { error: String(error?.message || error) };
+  }
+}
+
 
 const translations = {
   ar:{
@@ -448,9 +578,24 @@ async function handleOrderSubmit(event) {
   try {
     const { error } = await window.soumiSupabase.from('orders').insert(orderPayload);
     if (error) throw error;
-    const savedOrder = { ...orderPayload, id: `local_${Date.now()}` };
-    // Admin push is sent by Supabase trigger sql_push_notifications.sql.
-    sessionStorage.setItem('soumi_last_order', JSON.stringify(savedOrder));
+
+    await sendPushViaEdge({
+      targetApp: 'admin',
+      title: '👜 طلب جديد من Soumi Crochet',
+      message: `${customerName} - ${city} - ${phone}`,
+      includedSegments: ['All'],
+      url: 'https://panel.soumicrochet.store/index.html#orders',
+      buttonText: 'فتح الطلبات',
+      data: {
+        type: 'new_order',
+        phone,
+        city,
+        product_id: productId,
+        product_name: productNameTxt
+      }
+    });
+
+    sessionStorage.setItem('soumi_last_order', JSON.stringify(orderPayload));
     await trackPageView(true);
     window.location.href = 'thankyou.html';
   } catch (error) {
@@ -641,7 +786,21 @@ if(reviewForm) {
       };
       const { error } = await window.soumiSupabase.from('reviews').insert(payload);
       if (error) throw error;
-      // Admin review push is sent by Supabase trigger sql_push_notifications.sql.
+
+      await sendPushViaEdge({
+        targetApp: 'admin',
+        title: '⭐ رأي جديد فـ Soumi Crochet',
+        message: `${payload.reviewer_name} - ${payload.city}: ${payload.review_text}`,
+        includedSegments: ['All'],
+        url: 'https://panel.soumicrochet.store/index.html#reviews',
+        buttonText: 'قبول الرأي',
+        data: {
+          type: 'new_review',
+          reviewer_name: payload.reviewer_name,
+          city: payload.city
+        }
+      });
+
       if(status) status.textContent = "Merci! Votre avis a été envoyé.";
       reviewForm.reset();
       setTimeout(() => closeModalWithScrollUnlock(document.getElementById('reviewModal')), 2000);
@@ -651,423 +810,6 @@ if(reviewForm) {
       if(btn) btn.disabled = false;
     }
   });
-}
-
-
-/* --- PUSH NOTIFICATION PROMPT + SUBSCRIBER REGISTRATION --- */
-function pushCopy(){
-  return currentLang === 'ar'
-    ? {
-        eyebrow:'إشعارات Soumi Crochet',
-        title:'🔔 فعّلي الإشعارات ديال Soumi Crochet',
-        text:'باش توصلك الموديلات الجديدة، العروض المحدودة، وتتبع الطلب ديالك مباشرة.',
-        activate:'تفعيل الإشعارات',
-        continue:'نكمل التصفح',
-        denied:'ما تفعلاتش الإشعارات. بعض التنبيهات بحال تتبع الطلب ممكن ما توصلكش.'
-      }
-    : {
-        eyebrow:'SOUMI NOTIFICATIONS',
-        title:'🔔 Activez les notifications Soumi Crochet',
-        text:'Recevez les nouveautés, offres limitées et le suivi de votre commande directement.',
-        activate:'Activer les notifications',
-        continue:'Continuer sans notifications',
-        denied:'Notifications non activées. Certaines alertes comme le suivi de commande peuvent être limitées.'
-      };
-}
-
-function syncPushPromptLanguage(){
-  const c = pushCopy();
-  safeSet('pushPromptEyebrow', c.eyebrow);
-  safeSet('pushPromptTitle', c.title);
-  safeSet('pushPromptText', c.text);
-  safeSet('activatePushBtn', c.activate);
-  safeSet('continuePushBtn', c.continue);
-}
-
-function showPushPrompt(){
-  const modal = $('pushPromptModal');
-  if(!modal) return;
-  syncPushPromptLanguage();
-  openModalWithScrollLock(modal);
-}
-
-function closePushPrompt(){
-  closeModalWithScrollUnlock($('pushPromptModal'));
-  sessionStorage.setItem('soumi_push_prompt_seen', '1');
-}
-
-async function wait(ms){
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-let soumiOneSignalInitPromise = null;
-
-async function wait(ms){
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function initWebsiteOneSignal(){
-  if(soumiOneSignalInitPromise) return soumiOneSignalInitPromise;
-
-  soumiOneSignalInitPromise = new Promise((resolve) => {
-    if(!('Notification' in window) || !('serviceWorker' in navigator)){
-      resolve(null);
-      return;
-    }
-
-    if(!window.isSecureContext && !['localhost','127.0.0.1'].includes(location.hostname)){
-      resolve(null);
-      return;
-    }
-
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-
-    const timer = setTimeout(() => {
-      console.warn('OneSignal SDK did not become ready. Check SDK script, domain setup and worker files.');
-      resolve(null);
-    }, 18000);
-
-    try{
-      window.OneSignalDeferred.push(async function(OneSignal){
-        try{
-          if(!window.__soumiWebsiteOneSignalInitialized){
-            await OneSignal.init({
-              appId: window.SOUOMI_ONESIGNAL_APP_ID || WEBSITE_ONESIGNAL_APP_ID,
-              notifyButton: { enable: false },
-              allowLocalhostAsSecureOrigin: true,
-              serviceWorkerPath: window.SOUOMI_ONESIGNAL_SW_PATH || '/OneSignalSDKWorker.js',
-              serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-              serviceWorkerParam: { scope: window.SOUOMI_ONESIGNAL_SW_SCOPE || '/' }
-            });
-            window.__soumiWebsiteOneSignalInitialized = true;
-          }
-          clearTimeout(timer);
-          resolve(OneSignal);
-        }catch(err){
-          console.warn('OneSignal init failed:', err);
-          clearTimeout(timer);
-          resolve(null);
-        }
-      });
-    }catch(err){
-      console.warn('OneSignal queue failed:', err);
-      clearTimeout(timer);
-      resolve(null);
-    }
-  });
-
-  return soumiOneSignalInitPromise;
-}
-
-async function getOneSignalPlayerId(){
-  const OneSignal = await initWebsiteOneSignal();
-  if(!OneSignal) return localStorage.getItem('soumi_onesignal_player_id') || null;
-
-  try{
-    return OneSignal.User?.PushSubscription?.id || OneSignal.User?.onesignalId || localStorage.getItem('soumi_onesignal_player_id') || null;
-  }catch(_){
-    return localStorage.getItem('soumi_onesignal_player_id') || null;
-  }
-}
-
-async function waitForOneSignalPlayerId(maxTries = 18){
-  for(let i = 0; i < maxTries; i += 1){
-    const id = await getOneSignalPlayerId();
-    if(id) return id;
-    await wait(650);
-  }
-  return null;
-}
-
-async function ensureOneSignalPushOptIn(){
-  if(!('Notification' in window)){
-    return { granted:false, playerId:null, reason:'no_notification_api' };
-  }
-
-  if(!('serviceWorker' in navigator)){
-    return { granted:false, playerId:null, reason:'no_service_worker' };
-  }
-
-  if(!window.isSecureContext && !['localhost','127.0.0.1'].includes(location.hostname)){
-    return { granted:false, playerId:null, reason:'not_https' };
-  }
-
-  const OneSignal = await initWebsiteOneSignal();
-  if(!OneSignal){
-    return { granted:false, playerId:null, reason:'sdk_unavailable' };
-  }
-
-  try{
-    let supported = true;
-    if(typeof OneSignal.Notifications?.isPushSupported === 'function'){
-      supported = await OneSignal.Notifications.isPushSupported();
-    }
-    if(!supported) return { granted:false, playerId:null, reason:'unsupported' };
-  }catch(_){ }
-
-  try{
-    if(Notification.permission !== 'granted'){
-      if(OneSignal.Notifications?.requestPermission){
-        await OneSignal.Notifications.requestPermission();
-      }else{
-        await Notification.requestPermission();
-      }
-    }
-  }catch(err){
-    console.warn('Notification permission request failed:', err);
-  }
-
-  if(Notification.permission !== 'granted'){
-    return { granted:false, playerId:null, reason: Notification.permission === 'denied' ? 'denied' : 'permission_not_granted' };
-  }
-
-  try{
-    await navigator.serviceWorker.register('/OneSignalSDKWorker.js', { scope: '/' });
-  }catch(err){
-    console.warn('Manual service worker registration failed:', err);
-  }
-
-  try{
-    if(OneSignal.User?.PushSubscription?.optIn){
-      await OneSignal.User.PushSubscription.optIn();
-    }
-  }catch(err){
-    console.warn('OneSignal optIn failed:', err);
-  }
-
-  const playerId = await waitForOneSignalPlayerId(20);
-  return { granted: Boolean(playerId), playerId, reason: playerId ? 'ok' : 'no_subscription_id' };
-}
-
-async function trackActivityEvent(type, meta = {}){
-  if(!window.soumiSupabase) return;
-  const visitorId = getSoumiVisitorId();
-  const sessionId = getSoumiSessionId();
-
-  try{
-    const { data: existing } = await window.soumiSupabase
-      .from('analytics')
-      .select('activity_history, time_spent_seconds, ip_address, city, onesignal_user_id')
-      .eq('visitor_id', visitorId)
-      .maybeSingle();
-
-    const history = Array.isArray(existing?.activity_history) ? existing.activity_history : [];
-    const event = {
-      type,
-      page_url: window.location.href,
-      at: new Date().toISOString(),
-      meta
-    };
-
-    await window.soumiSupabase.from('analytics').upsert({
-      visitor_id: visitorId,
-      session_id: sessionId,
-      ip_address: existing?.ip_address || await getPublicIP(),
-      city: existing?.city || await getApproxCity(),
-      page_url: window.location.href,
-      time_spent_seconds: Math.max(Number(existing?.time_spent_seconds) || 0, Math.round((Date.now() - soumiPageStartedAt) / 1000)),
-      last_seen: new Date().toISOString(),
-      onesignal_user_id: existing?.onesignal_user_id || await getOneSignalPlayerId(),
-      activity_history: history.concat(event).slice(-100)
-    }, { onConflict: 'visitor_id' });
-  }catch(err){
-    console.warn('Activity tracking failed:', err);
-  }
-}
-
-async function registerPushSubscriber(playerId){
-  if(!playerId) throw new Error('No OneSignal subscription id');
-  if(!window.soumiSupabase) return;
-
-  const ip = await getPublicIP();
-  const city = await getApproxCity();
-  const visitorId = getSoumiVisitorId();
-
-  const deviceInfo = {
-    ip,
-    ip_address: ip,
-    city,
-    userAgent: navigator.userAgent,
-    language: navigator.language,
-    platform: navigator.platform,
-    subscription_id: playerId,
-    at: new Date().toISOString()
-  };
-
-  const { error: subError } = await window.soumiSupabase.from('subscribers').upsert({
-    onesignal_player_id: playerId,
-    visitor_id: visitorId,
-    city,
-    device_info: deviceInfo
-  }, { onConflict: 'onesignal_player_id' });
-  if(subError) throw subError;
-
-  const { data: existing } = await window.soumiSupabase
-    .from('analytics')
-    .select('activity_history, time_spent_seconds')
-    .eq('visitor_id', visitorId)
-    .maybeSingle();
-
-  const history = Array.isArray(existing?.activity_history) ? existing.activity_history : [];
-
-  await window.soumiSupabase.from('analytics').upsert({
-    visitor_id: visitorId,
-    session_id: getSoumiSessionId(),
-    ip_address: ip,
-    city,
-    page_url: window.location.href,
-    last_seen: new Date().toISOString(),
-    onesignal_user_id: playerId,
-    time_spent_seconds: Math.max(Number(existing?.time_spent_seconds) || 0, Math.round((Date.now() - soumiPageStartedAt) / 1000)),
-    activity_history: history.concat({ type:'push_subscribe', page_url: window.location.href, at: new Date().toISOString(), meta:{ onesignal_player_id: playerId } }).slice(-100)
-  }, { onConflict: 'visitor_id' });
-}
-
-async function sendAdminNewOrderPush(orderPayload){
-  try{
-    const title = '👜 Nouvelle commande Soumi Crochet';
-    const message = `${orderPayload.customer_name} - ${orderPayload.city} - ${orderPayload.phone}`;
-    const adminUrl = 'https://soumicrochet.store/admin/';
-    const payload = {
-      app_id: ADMIN_ONESIGNAL_APP_ID,
-      included_segments: ['All'],
-      headings: { en: title, fr: title, ar: title },
-      contents: { en: message, fr: message, ar: message },
-      url: adminUrl,
-      web_url: adminUrl,
-      web_buttons: [{ id:'open-admin', text:'Ouvrir dashboard', url: adminUrl }],
-      buttons: [{ id:'open-admin', text:'Ouvrir dashboard' }],
-      chrome_web_icon: 'https://soumicrochet.store/assets/img/logo.png',
-      firefox_icon: 'https://soumicrochet.store/assets/img/logo.png',
-      data: { order_id: orderPayload.id || null, type: 'new_order' }
-    };
-
-    await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`
-      },
-      body: JSON.stringify(payload)
-    });
-  }catch(err){
-    console.warn('Admin push failed:', err);
-  }
-}
-
-
-async function sendAdminNewReviewPush(reviewPayload){
-  try{
-    const title = `⭐ Avis جديد من ${reviewPayload.reviewer_name || 'Cliente'}`;
-    const message = `${reviewPayload.city || '-'}: ${String(reviewPayload.review_text || '').slice(0, 130)}`;
-    const adminUrl = 'https://soumicrochet.store/admin/#reviews';
-    const payload = {
-      app_id: ADMIN_ONESIGNAL_APP_ID,
-      included_segments: ['All'],
-      headings: { en: title, fr: title, ar: title },
-      contents: { en: message, fr: message, ar: message },
-      url: adminUrl,
-      web_url: adminUrl,
-      web_buttons: [{ id:'approve-review', text:'قبول الرأي', url: adminUrl }],
-      buttons: [{ id:'approve-review', text:'قبول الرأي' }],
-      chrome_web_icon: 'https://soumicrochet.store/assets/img/logo.png',
-      firefox_icon: 'https://soumicrochet.store/assets/img/logo.png',
-      data: { type: 'new_review', review_name: reviewPayload.reviewer_name || '', review_city: reviewPayload.city || '' }
-    };
-
-    await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`
-      },
-      body: JSON.stringify(payload)
-    });
-  }catch(err){
-    console.warn('Admin review push failed:', err);
-  }
-}
-
-async function activatePushNotifications(){
-  const warning = $('pushPromptWarning');
-  const btn = $('activatePushBtn');
-  const c = pushCopy();
-
-  if(btn){
-    btn.disabled = true;
-    btn.textContent = currentLang === 'ar' ? 'كيتم التفعيل...' : 'Activation...';
-  }
-  if(warning){ warning.hidden = true; warning.textContent = ''; }
-
-  try{
-    if(!window.isSecureContext){
-      throw new Error('Web Push requires HTTPS');
-    }
-
-    const result = await ensureOneSignalPushOptIn();
-    const playerId = result.playerId || await waitForOneSignalPlayerId();
-
-    if(result.granted && playerId){
-      await registerPushSubscriber(playerId);
-      localStorage.setItem('soumi_push_enabled', '1');
-      localStorage.setItem('soumi_onesignal_player_id', playerId);
-      await trackActivityEvent('push_subscribe_success', { onesignal_player_id: playerId });
-      closePushPrompt();
-      return;
-    }
-
-    if(warning){
-      const reasonMsg = result.reason === 'unsupported'
-        ? (currentLang === 'ar' ? 'المتصفح ديالك ما كيدعمش Web Push.' : 'Votre navigateur ne supporte pas Web Push.')
-        : result.reason === 'sdk_timeout'
-          ? (currentLang === 'ar' ? 'تأكد أن الموقع منشور بـ HTTPS وأن OneSignalSDKWorker.js موجود فالروت.' : 'Vérifiez HTTPS et le fichier OneSignalSDKWorker.js à la racine.')
-          : (currentLang === 'ar' ? 'إلى بان ليك طلب المتصفح، ضروري تضغط Allow.' : 'Si le navigateur affiche une demande, cliquez sur Allow.');
-      warning.textContent = c.denied + ' ' + reasonMsg;
-      warning.hidden = false;
-    }
-    await trackActivityEvent('push_denied', { reason: result.reason || 'unknown' });
-  }catch(err){
-    console.warn('Push activation failed:', err);
-    if(warning){
-      warning.textContent = window.isSecureContext
-        ? c.denied
-        : (currentLang === 'ar' ? 'الإشعارات كتحتاج الموقع يكون HTTPS وبنفس الدومين.' : 'Les notifications nécessitent HTTPS sur le même domaine.');
-      warning.hidden = false;
-    }
-  }finally{
-    if(btn){
-      btn.disabled = false;
-      btn.textContent = c.activate;
-    }
-  }
-}
-
-function initPushPrompt(){
-  syncPushPromptLanguage();
-
-  $('activatePushBtn')?.addEventListener('click', activatePushNotifications);
-  $('continuePushBtn')?.addEventListener('click', () => {
-    trackActivityEvent('push_continue_browsing');
-    closePushPrompt();
-  });
-  document.querySelectorAll('[data-close-push-modal]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      trackActivityEvent('push_prompt_closed');
-      closePushPrompt();
-    });
-  });
-
-  setTimeout(async () => {
-    if(sessionStorage.getItem('soumi_push_prompt_seen') === '1') return;
-    if(localStorage.getItem('soumi_push_enabled') === '1') return;
-    if(!('Notification' in window)) return;
-    if(Notification.permission === 'granted'){
-      const playerId = await getOneSignalPlayerId();
-      if(playerId) await registerPushSubscriber(playerId);
-      return;
-    }
-    showPushPrompt();
-  }, 900);
 }
 
 
@@ -1101,7 +843,7 @@ async function init(){
   loadPublishedReviews();
   trackPageView();
   initModalScrollFix();
-  initPushPrompt();
+  initSoumiPushPrompt();
 }
 
 document.addEventListener('DOMContentLoaded', init);

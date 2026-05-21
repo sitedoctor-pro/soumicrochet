@@ -19,13 +19,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
 
+  <!-- OneSignal Website Push - Soumi Crochet -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    window.SOUOMI_ONESIGNAL_APP_ID = "b0ca17c7-75cb-49bb-bfbd-936677a81519";
-    window.SOUOMI_ONESIGNAL_SW_PATH = "/OneSignalSDKWorker.js";
-    window.SOUOMI_ONESIGNAL_SW_SCOPE = "/";
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "6565128a-14fe-46c3-be87-745cfd90b264",
+        serviceWorkerPath: "OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/" },
+        notifyButton: {
+          enable: true,
+          position: "bottom-right",
+          showCredit: false
+        }
+      });
+    });
   </script>
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
 </head>
 <body>
@@ -284,23 +294,20 @@
   </div>
 
 
-  <div class="modal push-permission-modal" id="pushPromptModal" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="modal-mask" data-close-push-modal></div>
-    <div class="modal-card glass push-card">
-      <button class="modal-close" type="button" data-close-push-modal aria-label="Close">×</button>
-      <div class="modal-info">
-        <span class="eyebrow" id="pushPromptEyebrow">SOUMI NOTIFICATIONS</span>
-        <h2 id="pushPromptTitle">🔔 Activez les notifications Soumi Crochet</h2>
-        <p id="pushPromptText">Recevez les nouveautés, offres limitées et le suivi de votre commande directement sur votre téléphone.</p>
-        <p class="push-warning" id="pushPromptWarning" hidden></p>
-        <div class="push-actions">
-          <button class="btn btn-primary btn-glow pulse" type="button" id="activatePushBtn">Activer les notifications</button>
-          <button class="btn btn-secondary glass" type="button" id="continuePushBtn">Continuer sans notifications</button>
-        </div>
+  <div class="modal" id="pushPromptModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-mask" data-close-push-prompt></div>
+    <div class="modal-card glass" style="max-width:560px; padding:28px; text-align:center;">
+      <button class="modal-close" type="button" data-close-push-prompt aria-label="Close">×</button>
+      <span class="eyebrow">SOUMI CROCHET NOTIFICATIONS</span>
+      <h2 data-push-title>فعلي الإشعارات</h2>
+      <p data-push-text style="max-width:460px;margin:0 auto 18px;">باش توصلك أخبار الطلبات، العروض، وآخر موديلات Soumi Crochet.</p>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:18px;">
+        <button class="btn btn-primary btn-glow pulse" type="button" id="activatePushBtn">🔔 تفعيل الإشعارات</button>
+        <button class="btn btn-secondary glass" type="button" data-close-push-prompt>متابعة التصفح</button>
       </div>
+      <p id="pushWarning" style="display:none;margin:16px auto 0;color:#7a1730;font-weight:800;"></p>
     </div>
   </div>
-
 
   <div class="whatsapp-widget" id="whatsappWidget">
     <div class="wa-chat glass" id="waChat" aria-hidden="true">
