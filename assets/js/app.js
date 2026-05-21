@@ -265,6 +265,21 @@ function initSoumiPushPrompt() {
   setTimeout(showPushPrompt, 1500);
 }
 
+
+function absolutePushImageUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return 'https://soumicrochet.store/assets/img/logo.png';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('soumicrochet.store/')) return `https://${raw}`;
+  if (raw.startsWith('/')) return `https://soumicrochet.store${raw}`;
+  return `https://soumicrochet.store/${raw.replace(/^\/+/, '')}`;
+}
+
+function telUrl(value) {
+  const digits = String(value || '').replace(/[^0-9+]/g, '');
+  return digits ? `tel:${digits}` : 'https://panel.soumicrochet.store/index.html#orders';
+}
+
 async function sendPushViaEdge(body) {
   const functionUrl = `${SUPABASE_URL}/functions/v1/send-push`;
 
@@ -656,19 +671,24 @@ async function handleOrderSubmit(event) {
     const { error } = await window.soumiSupabase.from('orders').insert(orderPayload);
     if (error) throw error;
 
+    const productPushImage = absolutePushImageUrl(imageUrl);
     const adminOrderPush = sendPushViaEdge({
       targetApp: 'admin',
       title: '👜 طلب جديد من Soumi Crochet',
       message: `${customerName} - ${city} - ${phone}`,
       includedSegments: ['All'],
       url: 'https://panel.soumicrochet.store/index.html#orders',
-      buttonText: 'فتح الطلبات',
+      buttonText: 'تأكيد الطلب',
+      buttonUrl: telUrl(phone),
+      iconUrl: productPushImage,
+      imageUrl: productPushImage,
       data: {
         type: 'new_order',
         phone,
         city,
         product_id: productId,
-        product_name: productNameTxt
+        product_name: productNameTxt,
+        image_url: productPushImage
       }
     });
 
