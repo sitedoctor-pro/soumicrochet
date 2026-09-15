@@ -418,21 +418,37 @@
     finally { if(btn){btn.disabled=false;btn.textContent=original;} }
   }
 
-  function initReviews() { initAudioReviews(); $('reviewForm')?.addEventListener('submit', handleReviewSubmit); runIdle(loadPublishedReviews, 900); }
+  function initReviews() {
+    initAudioReviews();
+    $('reviewForm')?.addEventListener('submit', handleReviewSubmit);
+    const section=$('reviews');
+    let loaded=false;
+    const load=()=>{ if(loaded) return; loaded=true; loadPublishedReviews(); };
+    if(section && 'IntersectionObserver' in window){
+      const observer=new IntersectionObserver(entries=>{ if(entries.some(x=>x.isIntersecting)){ observer.disconnect(); load(); } },{rootMargin:'700px 0px'});
+      observer.observe(section);
+      setTimeout(()=>{ observer.disconnect(); load(); },15000);
+    } else setTimeout(load,6000);
+  }
 
   function openWhatsAppComposer(message = '', opener = null) {
     const chat = $('waChat'), input = $('waMessage');
     if (!chat) return;
-    chat.classList.add('show');
+    chat.hidden=false;
+    chat.removeAttribute('inert');
     chat.setAttribute('aria-hidden','false');
+    requestAnimationFrame(()=>chat.classList.add('show'));
     if (input) { if (message) input.value = message; requestAnimationFrame(() => input.focus({ preventScroll:true })); }
     if (opener instanceof HTMLElement) chat.dataset.openerId = opener.id || '';
   }
 
   function closeWhatsAppComposer() {
     const chat = $('waChat');
-    chat?.classList.remove('show');
-    chat?.setAttribute('aria-hidden','true');
+    if(!chat) return;
+    chat.classList.remove('show');
+    chat.setAttribute('aria-hidden','true');
+    chat.setAttribute('inert','');
+    setTimeout(()=>{ if(!chat.classList.contains('show')) chat.hidden=true; },220);
   }
 
   function initWhatsApp() {
@@ -454,12 +470,8 @@
 
   function getSessionId() { let id=sessionStorage.getItem('soumi_session_id'); if(!id){id=`session_${Date.now()}_${Math.random().toString(36).slice(2,10)}`;sessionStorage.setItem('soumi_session_id',id);} return id; }
   function getGeoCache() { try { const x=JSON.parse(localStorage.getItem('soumi_geo_cache')||'null'); return x && Date.now()-x.at<86400000 ? x : null; } catch(_){ return null; } }
-  async function getGeo() {
-    const cached=getGeoCache(); if(cached) return cached;
-    try { const r=await fetch('https://ipapi.co/json/',{cache:'force-cache'}); if(!r.ok) return {ip:null,city:null}; const d=await r.json(); const x={ip:d.ip||null,city:d.city||null,at:Date.now()}; localStorage.setItem('soumi_geo_cache',JSON.stringify(x)); return x; } catch(_){ return {ip:null,city:null}; }
-  }
   async function sendAnalytics(eventType, seconds=0, keepalive=false) {
-    try { const geo=getGeoCache() || (keepalive ? {ip:null,city:null} : await getGeo()); const payload={session_id:getSessionId(),ip_address:geo.ip||null,city:geo.city||null,page_url:location.href,event_type:eventType,time_spent_seconds:Math.max(0,Math.round(seconds))}; const res=await apiFetch('/rest/v1/analytics',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload),keepalive}); if(!res.ok) throw new Error(`HTTP ${res.status}`); } catch(_) {}
+    try { const geo=getGeoCache() || {ip:null,city:null}; const payload={session_id:getSessionId(),ip_address:geo.ip||null,city:geo.city||null,page_url:location.href,event_type:eventType,time_spent_seconds:Math.max(0,Math.round(seconds))}; const res=await apiFetch('/rest/v1/analytics',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload),keepalive}); if(!res.ok) return false; return true; } catch(_) { return false; }
   }
   function initFAQMotion() {
     const items=qsa('#faq .faq-item');
@@ -470,8 +482,11 @@
   }
 
   function initAnalytics() {
-    runIdle(()=>sendAnalytics('page_view',0,false),2800);
+    let started=false;
+    const start=()=>{ if(started) return; started=true; sendAnalytics('page_view',0,false); };
+    ['pointerdown','keydown','touchstart'].forEach(type=>window.addEventListener(type,start,{once:true,passive:true}));
     window.addEventListener('pagehide', () => {
+      if(!started) return;
       const seconds=(Date.now()-pageStartedAt)/1000;
       if(seconds>=5) sendAnalytics('engagement',seconds,true);
     }, { passive:true });

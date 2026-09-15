@@ -2454,3 +2454,11 @@ html[dir="rtl"] .footer-luxe-bottom nav { justify-content:flex-start; }
   .engagement-card { transition:none !important; }
 }
 .faq-help-icon svg { width: 32px; height: 32px; fill:none; stroke:currentColor; stroke-width:1.65; stroke-linecap:round; stroke-linejoin:round; }
+
+
+/* PERFORMANCE SAFEGUARDS */
+.wa-chat[hidden] { display: none !important; }
+.product-card { contain: layout paint style; }
+@media (max-width: 640px) {
+  #products .product-card:nth-child(n+4) { content-visibility: auto; contain-intrinsic-size: 326px 520px; }
+}
