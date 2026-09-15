@@ -1348,6 +1348,7 @@ html[dir="rtl"] .modal-info { padding: 28px 0 28px 12px; }
 
 /* ==========================================================================\n   HOMEPAGE HERO — editorial handmade redesign\n   ========================================================================== */
 .hero {
+  position: relative;
   min-height: min(820px, calc(100svh - var(--header-h) + 64px));
   display: grid;
   align-items: center;
@@ -1357,25 +1358,22 @@ html[dir="rtl"] .modal-info { padding: 28px 0 28px 12px; }
   background: #f5eadc;
 }
 
-.hero-background {
+.hero-background { display: none !important; }
+.hero::before {
+  content: '';
   position: absolute;
   z-index: 0;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+  width: auto;
+  height: auto;
   pointer-events: none;
+  background-image: url('../img/hero-desktop.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: none;
 }
-.hero-background img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  object-position: center;
-}
-html[dir="rtl"] .hero-background { transform: scaleX(-1); }
-.hero::before { content: none; }
-html[dir="rtl"] .hero::before { transform: none; }
+html[dir="rtl"] .hero::before { transform: scaleX(-1); }
 .hero::after {
   content: '';
   position: absolute;
@@ -1435,9 +1433,7 @@ html[dir="rtl"] .hero .hero-eyebrow { letter-spacing: .02em; font-style: normal;
   letter-spacing: -.042em;
   text-wrap: initial;
 }
-.hero h1 span,
-.hero h1 em { display: block; }
-.hero h1 span:first-child { color: #70152c; }
+.hero h1::first-line { color: #70152c; }
 .hero h1 em { color: #3d1c17; font-weight: 600; font-style: italic; }
 html[dir="rtl"] .hero h1 {
   margin-inline-start: auto;
@@ -1552,7 +1548,7 @@ html[dir="rtl"] .hero-signature {
 }
 
 @media (min-width: 641px) and (max-width: 1100px) {
-  .hero-background img { object-position: center; }
+  .hero::before { background-image: url('../img/hero-tablet.webp'); background-position: center; }
   .hero {
     min-height: 760px;
   }
@@ -1594,7 +1590,7 @@ html[dir="rtl"] .hero-signature {
 }
 
 @media (max-width: 640px) {
-  .hero-background img { object-position: center top; }
+  .hero::before { background-image: url('../img/hero-mobile.webp'); background-position: center top; }
   .hero {
     min-height: 900px;
     align-items: start;
@@ -2462,3 +2458,6 @@ html[dir="rtl"] .footer-luxe-bottom nav { justify-content:flex-start; }
 @media (max-width: 640px) {
   #products .product-card:nth-child(n+4) { content-visibility: auto; contain-intrinsic-size: 326px 520px; }
 }
+
+/* LCP stability: above-the-fold content paints immediately. */
+#home .hero-copy { opacity:1 !important; transform:none !important; transition:none !important; content-visibility:visible !important; }
